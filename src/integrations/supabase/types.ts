@@ -14,7 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          codigo: string
+          created_at: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      operarios: {
+        Row: {
+          activo: boolean
+          area: string
+          created_at: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activo?: boolean
+          area?: string
+          created_at?: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activo?: boolean
+          area?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      partes: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          descripcion: string
+          fecha: string
+          hora_fin: string
+          hora_inicio: string
+          id: string
+          minutos: number
+          operario_id: string
+          proyecto_id: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          descripcion?: string
+          fecha?: string
+          hora_fin: string
+          hora_inicio: string
+          id?: string
+          minutos?: number
+          operario_id: string
+          proyecto_id: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          descripcion?: string
+          fecha?: string
+          hora_fin?: string
+          hora_inicio?: string
+          id?: string
+          minutos?: number
+          operario_id?: string
+          proyecto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partes_operario_id_fkey"
+            columns: ["operario_id"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partes_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proyectos: {
+        Row: {
+          activo: boolean
+          cliente_id: string
+          codigo: string
+          created_at: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activo?: boolean
+          cliente_id: string
+          codigo: string
+          created_at?: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activo?: boolean
+          cliente_id?: string
+          codigo?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyectos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
