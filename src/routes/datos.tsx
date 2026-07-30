@@ -25,6 +25,8 @@ import {
   crearCliente,
   crearOperario,
   crearProyecto,
+  establecerPin,
+
   operariosQuery,
   proyectosQuery,
 } from "@/lib/api";
