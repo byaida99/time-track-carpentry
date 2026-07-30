@@ -248,17 +248,33 @@ function Operarios() {
   const borrar = useMutation(opts(borrarOperario as never, "Operario eliminado"));
   const [nombre, setNombre] = useState("");
   const [area, setArea] = useState("taller");
+  const [pin, setPin] = useState("");
+  const [cambiando, setCambiando] = useState<string | null>(null);
+  const [nuevoPin, setNuevoPin] = useState("");
+
+  async function guardarNuevoPin(id: string) {
+    if (nuevoPin.length < 4) return toast.error("El PIN debe tener al menos 4 dígitos");
+    try {
+      await establecerPin(id, nuevoPin);
+      setCambiando(null);
+      setNuevoPin("");
+      toast.success("PIN actualizado");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
 
   return (
     <Card className="shadow-plank">
       <CardContent className="pt-6">
         <form
-          className="grid gap-3 sm:grid-cols-[2fr_1fr_auto]"
+          className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto]"
           onSubmit={(e) => {
             e.preventDefault();
             if (!nombre.trim()) return toast.error("Escribe el nombre del operario");
-            crear.mutate({ nombre: nombre.trim().slice(0, 120), area } as never, {
-              onSuccess: () => setNombre(""),
+            if (pin.length < 4) return toast.error("Asigna un PIN de 4 a 8 dígitos");
+            crear.mutate({ nombre: nombre.trim().slice(0, 120), area, pin } as never, {
+              onSuccess: () => (setNombre(""), setPin("")),
             });
           }}
         >
@@ -288,23 +304,79 @@ function Operarios() {
               </SelectContent>
             </Select>
           </div>
+          <div className="grid gap-2">
+            <Label className="label-caps" htmlFor="pin-op">
+              PIN
+            </Label>
+            <Input
+              id="pin-op"
+              inputMode="numeric"
+              maxLength={8}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+              placeholder="4 a 8 dígitos"
+            />
+          </div>
           <div className="flex items-end">
             <Button type="submit">Añadir</Button>
           </div>
         </form>
 
-        <Lista
-          items={(operarios.data ?? []).map((o) => ({
-            id: o.id,
-            titulo: o.nombre,
-            detalle: o.area,
-          }))}
-          onBorrar={(id) => borrar.mutate(id as never)}
-        />
+        <ul className="mt-6 grid gap-2">
+          {(operarios.data ?? []).map((o) => (
+            <li key={o.id} className="rounded-md border border-border bg-background px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{o.nombre}</p>
+                  <p className="text-xs text-muted-foreground">{o.area}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setCambiando(cambiando === o.id ? null : o.id);
+                      setNuevoPin("");
+                    }}
+                  >
+                    Cambiar PIN
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Eliminar"
+                    onClick={() => borrar.mutate(o.id as never)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+              {cambiando === o.id ? (
+                <div className="mt-3 flex gap-2">
+                  <Input
+                    inputMode="numeric"
+                    maxLength={8}
+                    autoFocus
+                    value={nuevoPin}
+                    onChange={(e) => setNuevoPin(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Nuevo PIN"
+                  />
+                  <Button onClick={() => guardarNuevoPin(o.id)}>Guardar</Button>
+                </div>
+              ) : null}
+            </li>
+          ))}
+          {(operarios.data ?? []).length === 0 ? (
+            <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Todavía no hay operarios.
+            </p>
+          ) : null}
+        </ul>
       </CardContent>
     </Card>
   );
 }
+
 
 function Lista({
   items,
