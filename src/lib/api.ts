@@ -100,20 +100,65 @@ export async function crearParte(input: {
   if (error) throw new Error(error.message);
 }
 
+export async function actualizarParte(input: {
+  id: string;
+  fecha: string;
+  cliente_id: string;
+  proyecto_id: string;
+  hora_inicio: string;
+  hora_fin: string;
+  descripcion: string;
+}) {
+  const { id, ...cambios } = input;
+  const { error } = await supabase.from("partes").update(cambios).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function borrarParte(id: string) {
   const { error } = await supabase.from("partes").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 
-export async function crearOperario(input: { nombre: string; area: string }) {
-  const { error } = await supabase.from("operarios").insert(input);
+export async function verificarPin(operarioId: string, pin: string) {
+  const { data, error } = await supabase.rpc("verificar_pin", {
+    _operario_id: operarioId,
+    _pin: pin,
+  });
   if (error) throw new Error(error.message);
+  return data === true;
+}
+
+export async function establecerPin(operarioId: string, pin: string) {
+  const { error } = await supabase.rpc("establecer_pin", {
+    _operario_id: operarioId,
+    _pin: pin,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function tienePin(operarioId: string) {
+  const { data, error } = await supabase.rpc("operario_tiene_pin", {
+    _operario_id: operarioId,
+  });
+  if (error) throw new Error(error.message);
+  return data === true;
+}
+
+export async function crearOperario(input: { nombre: string; area: string; pin: string }) {
+  const { data, error } = await supabase
+    .from("operarios")
+    .insert({ nombre: input.nombre, area: input.area })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  await establecerPin(data.id, input.pin);
 }
 
 export async function borrarOperario(id: string) {
   const { error } = await supabase.from("operarios").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
 
 export async function crearCliente(input: { codigo: string; nombre: string }) {
   const { error } = await supabase.from("clientes").insert(input);

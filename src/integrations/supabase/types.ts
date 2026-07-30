@@ -42,6 +42,7 @@ export type Database = {
           created_at: string
           id: string
           nombre: string
+          pin_hash: string | null
         }
         Insert: {
           activo?: boolean
@@ -49,6 +50,7 @@ export type Database = {
           created_at?: string
           id?: string
           nombre: string
+          pin_hash?: string | null
         }
         Update: {
           activo?: boolean
@@ -56,6 +58,7 @@ export type Database = {
           created_at?: string
           id?: string
           nombre?: string
+          pin_hash?: string | null
         }
         Relationships: []
       }
@@ -160,7 +163,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      establecer_pin: {
+        Args: { _operario_id: string; _pin: string }
+        Returns: undefined
+      }
+      operario_tiene_pin: { Args: { _operario_id: string }; Returns: boolean }
+      verificar_pin: {
+        Args: { _operario_id: string; _pin: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
