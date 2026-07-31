@@ -103,11 +103,12 @@ export const partesQuery = {
 export async function crearParte(input: {
   fecha: string;
   operario_id: string;
-  cliente_id: string;
-  proyecto_id: string;
+  cliente_id: string | null;
+  proyecto_id: string | null;
   hora_inicio: string;
   hora_fin: string;
   descripcion: string;
+  tipo: TipoParte;
 }) {
   const { error } = await supabase.from("partes").insert(input);
   if (error) throw new Error(error.message);
@@ -116,16 +117,18 @@ export async function crearParte(input: {
 export async function actualizarParte(input: {
   id: string;
   fecha: string;
-  cliente_id: string;
-  proyecto_id: string;
+  cliente_id: string | null;
+  proyecto_id: string | null;
   hora_inicio: string;
   hora_fin: string;
   descripcion: string;
+  tipo: TipoParte;
 }) {
   const { id, ...cambios } = input;
   const { error } = await supabase.from("partes").update(cambios).eq("id", id);
   if (error) throw new Error(error.message);
 }
+
 
 export async function borrarParte(id: string) {
   const { error } = await supabase.from("partes").delete().eq("id", id);
