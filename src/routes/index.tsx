@@ -160,6 +160,13 @@ function Acceso() {
 
 /* ---------------- Parte de horas ---------------- */
 
+const CONFIG_DEFECTO = {
+  jornada_minutos: 480,
+  hora_entrada: "07:00",
+  desayuno_minutos: 30,
+  comida_minutos: 60,
+};
+
 function Fichar({
   sesion,
   salir,
@@ -171,13 +178,25 @@ function Fichar({
   const clientes = useQuery(clientesQuery);
   const proyectos = useQuery(proyectosQuery);
   const partes = useQuery(partesQuery);
+  const operarios = useQuery(operariosQuery);
+
+  const config = useMemo(() => {
+    const o = (operarios.data ?? []).find((x) => x.id === sesion.id);
+    if (!o) return CONFIG_DEFECTO;
+    return {
+      jornada_minutos: o.jornada_minutos ?? CONFIG_DEFECTO.jornada_minutos,
+      hora_entrada: hhmm(o.hora_entrada ?? CONFIG_DEFECTO.hora_entrada),
+      desayuno_minutos: o.desayuno_minutos ?? CONFIG_DEFECTO.desayuno_minutos,
+      comida_minutos: o.comida_minutos ?? CONFIG_DEFECTO.comida_minutos,
+    };
+  }, [operarios.data, sesion.id]);
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [fecha, setFecha] = useState(hoy());
   const [clienteId, setClienteId] = useState("");
   const [proyectoId, setProyectoId] = useState("");
-  const [horaInicio, setHoraInicio] = useState("08:00");
-  const [horaFin, setHoraFin] = useState("14:00");
+  const [horaInicio, setHoraInicio] = useState(config.hora_entrada);
+  const [horaFin, setHoraFin] = useState(aHora(aMinutos(config.hora_entrada) + 60));
   const [descripcion, setDescripcion] = useState("");
 
   const mios = useMemo(
@@ -185,30 +204,64 @@ function Fichar({
     [partes.data, sesion.id],
   );
 
+  const delDia = useMemo(
+    () =>
+      mios
+        .filter((p) => p.fecha === fecha)
+        .slice()
+        .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio)),
+    [mios, fecha],
+  );
+
+  // El reloj del siguiente parte arranca donde acabó el último tramo del día.
+  const proximoInicio = useMemo(() => {
+    if (delDia.length === 0) return config.hora_entrada;
+    return delDia.reduce(
+      (max, p) => (aMinutos(p.hora_fin) > aMinutos(max) ? hhmm(p.hora_fin) : max),
+      "00:00",
+    );
+  }, [delDia, config.hora_entrada]);
+
+  const trabajados = delDia
+    .filter((p) => p.tipo === "trabajo")
+    .reduce((acc, p) => acc + p.minutos, 0);
+  const descansados = delDia
+    .filter((p) => p.tipo !== "trabajo")
+    .reduce((acc, p) => acc + p.minutos, 0);
+  const pendiente = Math.max(0, config.jornada_minutos - trabajados);
+  const yaDesayuno = delDia.some((p) => p.tipo === "desayuno");
+  const yaComio = delDia.some((p) => p.tipo === "comida");
+
+  // Sincroniza el reloj del formulario con el final del último parte.
+  useEffect(() => {
+    if (editandoId) return;
+    setHoraInicio(proximoInicio);
+    setHoraFin(aHora(aMinutos(proximoInicio) + (pendiente > 0 ? Math.min(pendiente, 240) : 60)));
+  }, [proximoInicio, editandoId, pendiente]);
+
   const proyectosCliente = useMemo(
     () => (proyectos.data ?? []).filter((p) => p.cliente_id === clienteId),
     [proyectos.data, clienteId],
   );
 
-  const duracion = useMemo(() => {
-    const [hi, mi] = horaInicio.split(":").map(Number);
-    const [hf, mf] = horaFin.split(":").map(Number);
-    const total = hf * 60 + mf - (hi * 60 + mi);
-    return Number.isFinite(total) ? total : 0;
-  }, [horaInicio, horaFin]);
+  const duracion = useMemo(
+    () => aMinutos(horaFin) - aMinutos(horaInicio),
+    [horaInicio, horaFin],
+  );
 
   function limpiar() {
     setEditandoId(null);
     setDescripcion("");
-    setHoraInicio("08:00");
-    setHoraFin("14:00");
+    setHoraInicio(proximoInicio);
+    setHoraFin(aHora(aMinutos(proximoInicio) + (pendiente > 0 ? Math.min(pendiente, 240) : 60)));
   }
 
   const crear = useMutation({
     mutationFn: crearParte,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partes"] });
-      limpiar();
+      setEditandoId(null);
+      setDescripcion("");
       toast.success("Parte registrado");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -234,9 +287,7 @@ function Fichar({
   });
 
   // Comprobación local de solapes (el servidor también lo valida)
-  function haySolape() {
-    const inicio = horaInicio;
-    const fin = horaFin;
+  function haySolape(inicio: string, fin: string) {
     return mios.some(
       (p) =>
         p.id !== editandoId &&
@@ -244,6 +295,30 @@ function Fichar({
         inicio < hhmm(p.hora_fin) &&
         fin > hhmm(p.hora_inicio),
     );
+  }
+
+  function registrarDescanso(tipo: "desayuno" | "comida") {
+    const minutos = tipo === "desayuno" ? config.desayuno_minutos : config.comida_minutos;
+    if (minutos <= 0) {
+      toast.error("Ese descanso está configurado a 0 minutos");
+      return;
+    }
+    const inicio = proximoInicio;
+    const fin = aHora(aMinutos(inicio) + minutos);
+    if (haySolape(inicio, fin)) {
+      toast.error("El descanso se solapa con otro tramo tuyo");
+      return;
+    }
+    crear.mutate({
+      fecha,
+      operario_id: sesion.id,
+      cliente_id: null,
+      proyecto_id: null,
+      hora_inicio: inicio,
+      hora_fin: fin,
+      descripcion: tipo === "desayuno" ? "Desayuno" : "Comida",
+      tipo,
+    });
   }
 
   function enviar(e: React.FormEvent) {
@@ -260,7 +335,7 @@ function Fichar({
       toast.error("Añade una descripción del trabajo");
       return;
     }
-    if (haySolape()) {
+    if (haySolape(horaInicio, horaFin)) {
       toast.error("Ese tramo se solapa con otro parte tuyo del mismo día");
       return;
     }
@@ -271,6 +346,7 @@ function Fichar({
       hora_inicio: horaInicio,
       hora_fin: horaFin,
       descripcion: descripcion.trim().slice(0, 500),
+      tipo: "trabajo" as const,
     };
     if (editandoId) editar.mutate({ id: editandoId, ...base });
     else crear.mutate({ ...base, operario_id: sesion.id });
@@ -279,17 +355,16 @@ function Fichar({
   function cargarParaEditar(p: (typeof mios)[number]) {
     setEditandoId(p.id);
     setFecha(p.fecha);
-    setClienteId(p.cliente_id);
-    setProyectoId(p.proyecto_id);
+    setClienteId(p.cliente_id ?? "");
+    setProyectoId(p.proyecto_id ?? "");
     setHoraInicio(hhmm(p.hora_inicio));
     setHoraFin(hhmm(p.hora_fin));
     setDescripcion(p.descripcion);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const delDia = mios.filter((p) => p.fecha === fecha);
-  const totalDia = delDia.reduce((acc, p) => acc + p.minutos, 0);
   const guardando = crear.isPending || editar.isPending;
+  const progreso = Math.min(100, Math.round((trabajados / config.jornada_minutos) * 100));
 
   return (
     <AppShell
@@ -305,6 +380,57 @@ function Fichar({
           <LogOut className="mr-2 size-4" /> Salir
         </Button>
       </div>
+
+      <Card className="mb-6 border-border shadow-plank">
+        <CardContent className="grid gap-4 pt-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="label-caps text-muted-foreground">Jornada del {fecha}</p>
+            <p className="font-display text-sm font-semibold">
+              {formatoHoras(trabajados)} de {formatoHoras(config.jornada_minutos)}
+              {pendiente > 0 ? (
+                <span className="text-muted-foreground"> · faltan {formatoHoras(pendiente)}</span>
+              ) : (
+                <span className="text-primary"> · jornada completa</span>
+              )}
+            </p>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progreso}%` }} />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Entrada {config.hora_entrada} · descansos registrados {formatoHoras(descansados)} ·
+            próximo tramo desde{" "}
+            <span className="font-display font-semibold text-foreground">{proximoInicio}</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={crear.isPending || yaDesayuno || config.desayuno_minutos === 0}
+              onClick={() => registrarDescanso("desayuno")}
+            >
+              <Coffee className="mr-2 size-4" />
+              {yaDesayuno
+                ? "Desayuno registrado"
+                : `Desayuno (${config.desayuno_minutos} min)`}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={crear.isPending || yaComio || config.comida_minutos === 0}
+              onClick={() => registrarDescanso("comida")}
+            >
+              <UtensilsCrossed className="mr-2 size-4" />
+              {yaComio ? "Comida registrada" : `Comida (${config.comida_minutos} min)`}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Los descansos son opcionales y no cuentan como horas trabajadas.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card className="border-border shadow-plank">
         <CardContent className="pt-6">
@@ -407,6 +533,19 @@ function Fichar({
               </div>
             </div>
 
+            {!editandoId && horaInicio !== proximoInicio ? (
+              <p className="text-xs text-muted-foreground">
+                El siguiente tramo debería empezar a las {proximoInicio}.{" "}
+                <button
+                  type="button"
+                  className="font-semibold text-primary underline"
+                  onClick={() => setHoraInicio(proximoInicio)}
+                >
+                  Ajustar
+                </button>
+              </p>
+            ) : null}
+
             <div className="grid gap-2">
               <Label className="label-caps" htmlFor="descripcion">
                 Descripción del trabajo
@@ -439,7 +578,7 @@ function Fichar({
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xl font-bold">Mis partes del {fecha}</h2>
           <span className="font-display text-sm font-semibold text-muted-foreground">
-            Total: {formatoHoras(totalDia)}
+            Trabajado: {formatoHoras(trabajados)}
           </span>
         </div>
 
@@ -459,21 +598,30 @@ function Fichar({
                 <div className="min-w-0">
                   <p className="font-display text-sm font-semibold">
                     {hhmm(p.hora_inicio)}–{hhmm(p.hora_fin)} · {formatoHoras(p.minutos)}
+                    {p.tipo !== "trabajo" ? (
+                      <span className="ml-2 rounded-sm bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        {ETIQUETA_TIPO[p.tipo] ?? p.tipo}
+                      </span>
+                    ) : null}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {p.cliente?.codigo} / {p.proyecto?.codigo} — {p.proyecto?.nombre}
-                  </p>
+                  {p.tipo === "trabajo" ? (
+                    <p className="text-sm text-muted-foreground">
+                      {p.cliente?.codigo} / {p.proyecto?.codigo} — {p.proyecto?.nombre}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-sm">{p.descripcion}</p>
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Editar parte"
-                    onClick={() => cargarParaEditar(p)}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
+                  {p.tipo === "trabajo" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Editar parte"
+                      onClick={() => cargarParaEditar(p)}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -491,3 +639,4 @@ function Fichar({
     </AppShell>
   );
 }
+
