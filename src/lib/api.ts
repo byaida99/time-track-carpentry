@@ -5,6 +5,10 @@ export type Operario = {
   nombre: string;
   area: string;
   activo: boolean;
+  jornada_minutos: number;
+  hora_entrada: string;
+  desayuno_minutos: number;
+  comida_minutos: number;
 };
 
 export type Cliente = {
@@ -21,16 +25,19 @@ export type Proyecto = {
   activo: boolean;
 };
 
+export type TipoParte = "trabajo" | "desayuno" | "comida";
+
 export type Parte = {
   id: string;
   fecha: string;
   operario_id: string;
-  cliente_id: string;
-  proyecto_id: string;
+  cliente_id: string | null;
+  proyecto_id: string | null;
   hora_inicio: string;
   hora_fin: string;
   minutos: number;
   descripcion: string;
+  tipo: string;
   created_at: string;
 };
 
@@ -49,9 +56,15 @@ export const operariosQuery = {
   queryKey: ["operarios"],
   queryFn: async () =>
     unwrap<Operario[]>(
-      await supabase.from("operarios").select("id, nombre, area, activo").order("nombre"),
+      await supabase
+        .from("operarios")
+        .select(
+          "id, nombre, area, activo, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos",
+        )
+        .order("nombre") as never,
     ),
 };
+
 
 export const clientesQuery = {
   queryKey: ["clientes"],
