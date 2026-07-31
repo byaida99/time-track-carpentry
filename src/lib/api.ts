@@ -5,6 +5,10 @@ export type Operario = {
   nombre: string;
   area: string;
   activo: boolean;
+  jornada_minutos: number;
+  hora_entrada: string;
+  desayuno_minutos: number;
+  comida_minutos: number;
 };
 
 export type Cliente = {
@@ -21,16 +25,19 @@ export type Proyecto = {
   activo: boolean;
 };
 
+export type TipoParte = "trabajo" | "desayuno" | "comida";
+
 export type Parte = {
   id: string;
   fecha: string;
   operario_id: string;
-  cliente_id: string;
-  proyecto_id: string;
+  cliente_id: string | null;
+  proyecto_id: string | null;
   hora_inicio: string;
   hora_fin: string;
   minutos: number;
   descripcion: string;
+  tipo: string;
   created_at: string;
 };
 
@@ -49,9 +56,15 @@ export const operariosQuery = {
   queryKey: ["operarios"],
   queryFn: async () =>
     unwrap<Operario[]>(
-      await supabase.from("operarios").select("id, nombre, area, activo").order("nombre"),
+      await supabase
+        .from("operarios")
+        .select(
+          "id, nombre, area, activo, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos",
+        )
+        .order("nombre") as never,
     ),
 };
+
 
 export const clientesQuery = {
   queryKey: ["clientes"],
@@ -90,11 +103,12 @@ export const partesQuery = {
 export async function crearParte(input: {
   fecha: string;
   operario_id: string;
-  cliente_id: string;
-  proyecto_id: string;
+  cliente_id: string | null;
+  proyecto_id: string | null;
   hora_inicio: string;
   hora_fin: string;
   descripcion: string;
+  tipo: TipoParte;
 }) {
   const { error } = await supabase.from("partes").insert(input);
   if (error) throw new Error(error.message);
@@ -103,16 +117,18 @@ export async function crearParte(input: {
 export async function actualizarParte(input: {
   id: string;
   fecha: string;
-  cliente_id: string;
-  proyecto_id: string;
+  cliente_id: string | null;
+  proyecto_id: string | null;
   hora_inicio: string;
   hora_fin: string;
   descripcion: string;
+  tipo: TipoParte;
 }) {
   const { id, ...cambios } = input;
   const { error } = await supabase.from("partes").update(cambios).eq("id", id);
   if (error) throw new Error(error.message);
 }
+
 
 export async function borrarParte(id: string) {
   const { error } = await supabase.from("partes").delete().eq("id", id);
@@ -144,20 +160,47 @@ export async function tienePin(operarioId: string) {
   return data === true;
 }
 
-export async function crearOperario(input: { nombre: string; area: string; pin: string }) {
+export async function crearOperario(input: {
+  nombre: string;
+  area: string;
+  pin: string;
+  jornada_minutos?: number;
+  hora_entrada?: string;
+}) {
   const { data, error } = await supabase
     .from("operarios")
-    .insert({ nombre: input.nombre, area: input.area })
+    .insert({
+      nombre: input.nombre,
+      area: input.area,
+      ...(input.jornada_minutos ? { jornada_minutos: input.jornada_minutos } : {}),
+      ...(input.hora_entrada ? { hora_entrada: input.hora_entrada } : {}),
+    } as never)
     .select("id")
     .single();
   if (error) throw new Error(error.message);
   await establecerPin(data.id, input.pin);
 }
 
+export async function actualizarOperario(input: {
+  id: string;
+  jornada_minutos: number;
+  hora_entrada: string;
+  desayuno_minutos: number;
+  comida_minutos: number;
+}) {
+  const { id, ...cambios } = input;
+  const { error } = await supabase
+    .from("operarios")
+    .update(cambios as never)
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function borrarOperario(id: string) {
   const { error } = await supabase.from("operarios").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
 
 
 export async function crearCliente(input: { codigo: string; nombre: string }) {
@@ -202,3 +245,19 @@ export function hoy() {
 export function hhmm(valor: string) {
   return valor.slice(0, 5);
 }
+
+export function aMinutos(hora: string) {
+  const [h, m] = hora.slice(0, 5).split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
+export function aHora(minutos: number) {
+  const m = Math.max(0, Math.min(23 * 60 + 59, Math.round(minutos)));
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+
+export const ETIQUETA_TIPO: Record<string, string> = {
+  trabajo: "Trabajo",
+  desayuno: "Desayuno",
+  comida: "Comida",
+};

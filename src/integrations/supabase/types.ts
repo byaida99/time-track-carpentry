@@ -39,24 +39,36 @@ export type Database = {
         Row: {
           activo: boolean
           area: string
+          comida_minutos: number
           created_at: string
+          desayuno_minutos: number
+          hora_entrada: string
           id: string
+          jornada_minutos: number
           nombre: string
           pin_hash: string | null
         }
         Insert: {
           activo?: boolean
           area?: string
+          comida_minutos?: number
           created_at?: string
+          desayuno_minutos?: number
+          hora_entrada?: string
           id?: string
+          jornada_minutos?: number
           nombre: string
           pin_hash?: string | null
         }
         Update: {
           activo?: boolean
           area?: string
+          comida_minutos?: number
           created_at?: string
+          desayuno_minutos?: number
+          hora_entrada?: string
           id?: string
+          jornada_minutos?: number
           nombre?: string
           pin_hash?: string | null
         }
@@ -64,7 +76,7 @@ export type Database = {
       }
       partes: {
         Row: {
-          cliente_id: string
+          cliente_id: string | null
           created_at: string
           descripcion: string
           fecha: string
@@ -73,10 +85,11 @@ export type Database = {
           id: string
           minutos: number
           operario_id: string
-          proyecto_id: string
+          proyecto_id: string | null
+          tipo: string
         }
         Insert: {
-          cliente_id: string
+          cliente_id?: string | null
           created_at?: string
           descripcion?: string
           fecha?: string
@@ -85,10 +98,11 @@ export type Database = {
           id?: string
           minutos?: number
           operario_id: string
-          proyecto_id: string
+          proyecto_id?: string | null
+          tipo?: string
         }
         Update: {
-          cliente_id?: string
+          cliente_id?: string | null
           created_at?: string
           descripcion?: string
           fecha?: string
@@ -97,7 +111,8 @@ export type Database = {
           id?: string
           minutos?: number
           operario_id?: string
-          proyecto_id?: string
+          proyecto_id?: string | null
+          tipo?: string
         }
         Relationships: [
           {
