@@ -245,3 +245,19 @@ export function hoy() {
 export function hhmm(valor: string) {
   return valor.slice(0, 5);
 }
+
+export function aMinutos(hora: string) {
+  const [h, m] = hora.slice(0, 5).split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
+export function aHora(minutos: number) {
+  const m = Math.max(0, Math.min(23 * 60 + 59, Math.round(minutos)));
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+
+export const ETIQUETA_TIPO: Record<string, string> = {
+  trabajo: "Trabajo",
+  desayuno: "Desayuno",
+  comida: "Comida",
+};
