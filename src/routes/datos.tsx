@@ -248,11 +248,59 @@ function Operarios() {
   const opts = useCrud("operarios");
   const crear = useMutation(opts(crearOperario as never, "Operario guardado"));
   const borrar = useMutation(opts(borrarOperario as never, "Operario eliminado"));
+  const guardarJornada = useMutation(opts(actualizarOperario as never, "Jornada actualizada"));
   const [nombre, setNombre] = useState("");
   const [area, setArea] = useState("taller");
   const [pin, setPin] = useState("");
   const [cambiando, setCambiando] = useState<string | null>(null);
   const [nuevoPin, setNuevoPin] = useState("");
+  const [jornadaDe, setJornadaDe] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    horas: "8",
+    entrada: "07:00",
+    desayuno: "30",
+    comida: "60",
+  });
+
+  function abrirJornada(o: {
+    id: string;
+    jornada_minutos: number;
+    hora_entrada: string;
+    desayuno_minutos: number;
+    comida_minutos: number;
+  }) {
+    if (jornadaDe === o.id) return setJornadaDe(null);
+    setJornadaDe(o.id);
+    setForm({
+      horas: String((o.jornada_minutos ?? 480) / 60),
+      entrada: (o.hora_entrada ?? "07:00").slice(0, 5),
+      desayuno: String(o.desayuno_minutos ?? 30),
+      comida: String(o.comida_minutos ?? 60),
+    });
+  }
+
+  function enviarJornada(id: string) {
+    const horas = Number(form.horas.replace(",", "."));
+    const desayuno = Number(form.desayuno);
+    const comida = Number(form.comida);
+    if (!Number.isFinite(horas) || horas <= 0 || horas > 24)
+      return toast.error("La jornada debe estar entre 0 y 24 horas");
+    if (!/^\d{2}:\d{2}$/.test(form.entrada)) return toast.error("Hora de entrada no válida");
+    if (!Number.isFinite(desayuno) || desayuno < 0 || desayuno > 240)
+      return toast.error("Desayuno entre 0 y 240 minutos");
+    if (!Number.isFinite(comida) || comida < 0 || comida > 240)
+      return toast.error("Comida entre 0 y 240 minutos");
+    guardarJornada.mutate(
+      {
+        id,
+        jornada_minutos: Math.round(horas * 60),
+        hora_entrada: form.entrada,
+        desayuno_minutos: Math.round(desayuno),
+        comida_minutos: Math.round(comida),
+      } as never,
+      { onSuccess: () => setJornadaDe(null) },
+    );
+  }
 
   async function guardarNuevoPin(id: string) {
     if (nuevoPin.length < 4) return toast.error("El PIN debe tener al menos 4 dígitos");
@@ -275,9 +323,17 @@ function Operarios() {
             e.preventDefault();
             if (!nombre.trim()) return toast.error("Escribe el nombre del operario");
             if (pin.length < 4) return toast.error("Asigna un PIN de 4 a 8 dígitos");
-            crear.mutate({ nombre: nombre.trim().slice(0, 120), area, pin } as never, {
-              onSuccess: () => (setNombre(""), setPin("")),
-            });
+            crear.mutate(
+              {
+                nombre: nombre.trim().slice(0, 120),
+                area,
+                pin,
+                hora_entrada: area === "oficina" ? "08:00" : "07:00",
+              } as never,
+              {
+                onSuccess: () => (setNombre(""), setPin("")),
+              },
+            );
           }}
         >
           <div className="grid gap-2">
@@ -301,8 +357,8 @@ function Operarios() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="taller">Taller</SelectItem>
-                <SelectItem value="oficina">Oficina</SelectItem>
+                <SelectItem value="taller">Taller (entra a las 7:00)</SelectItem>
+                <SelectItem value="oficina">Oficina (entra a las 8:00)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -330,9 +386,16 @@ function Operarios() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">{o.nombre}</p>
-                  <p className="text-xs text-muted-foreground">{o.area}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {o.area} · entrada {(o.hora_entrada ?? "07:00").slice(0, 5)} ·{" "}
+                    {formatoHoras(o.jornada_minutos ?? 480)}/día · desayuno{" "}
+                    {o.desayuno_minutos ?? 30} min · comida {o.comida_minutos ?? 60} min
+                  </p>
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => abrirJornada(o)}>
+                    Jornada
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -353,6 +416,47 @@ function Operarios() {
                   </Button>
                 </div>
               </div>
+              {jornadaDe === o.id ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+                  <div className="grid gap-1">
+                    <Label className="label-caps">Horas/día</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={form.horas}
+                      onChange={(e) => setForm({ ...form, horas: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label className="label-caps">Entrada</Label>
+                    <Input
+                      type="time"
+                      value={form.entrada}
+                      onChange={(e) => setForm({ ...form, entrada: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label className="label-caps">Desayuno (min)</Label>
+                    <Input
+                      inputMode="numeric"
+                      value={form.desayuno}
+                      onChange={(e) => setForm({ ...form, desayuno: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label className="label-caps">Comida (min)</Label>
+                    <Input
+                      inputMode="numeric"
+                      value={form.comida}
+                      onChange={(e) => setForm({ ...form, comida: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={() => enviarJornada(o.id)} disabled={guardarJornada.isPending}>
+                      Guardar
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
               {cambiando === o.id ? (
                 <div className="mt-3 flex gap-2">
                   <Input
@@ -378,6 +482,7 @@ function Operarios() {
     </Card>
   );
 }
+
 
 
 function Lista({
