@@ -20,7 +20,11 @@ import {
 } from "@/components/ui/select";
 import {
   actualizarParte,
+  aHora,
+  aMinutos,
   borrarParte,
+  ETIQUETA_TIPO,
+
   clientesQuery,
   crearParte,
   formatoHoras,
