@@ -60,7 +60,9 @@ function Informes() {
 
   const filtrados = useMemo(() => {
     return (partes.data ?? []).filter((p) => {
+      if (p.tipo !== "trabajo") return false;
       if (desde && p.fecha < desde) return false;
+
       if (hasta && p.fecha > hasta) return false;
       if (operarioId !== TODOS && p.operario_id !== operarioId) return false;
       if (clienteId !== TODOS && p.cliente_id !== clienteId) return false;
