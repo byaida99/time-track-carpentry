@@ -18,7 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  actualizarOperario,
   borrarCliente,
+  formatoHoras,
+
   borrarOperario,
   borrarProyecto,
   clientesQuery,
