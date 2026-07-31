@@ -160,20 +160,47 @@ export async function tienePin(operarioId: string) {
   return data === true;
 }
 
-export async function crearOperario(input: { nombre: string; area: string; pin: string }) {
+export async function crearOperario(input: {
+  nombre: string;
+  area: string;
+  pin: string;
+  jornada_minutos?: number;
+  hora_entrada?: string;
+}) {
   const { data, error } = await supabase
     .from("operarios")
-    .insert({ nombre: input.nombre, area: input.area })
+    .insert({
+      nombre: input.nombre,
+      area: input.area,
+      ...(input.jornada_minutos ? { jornada_minutos: input.jornada_minutos } : {}),
+      ...(input.hora_entrada ? { hora_entrada: input.hora_entrada } : {}),
+    } as never)
     .select("id")
     .single();
   if (error) throw new Error(error.message);
   await establecerPin(data.id, input.pin);
 }
 
+export async function actualizarOperario(input: {
+  id: string;
+  jornada_minutos: number;
+  hora_entrada: string;
+  desayuno_minutos: number;
+  comida_minutos: number;
+}) {
+  const { id, ...cambios } = input;
+  const { error } = await supabase
+    .from("operarios")
+    .update(cambios as never)
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function borrarOperario(id: string) {
   const { error } = await supabase.from("operarios").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
 
 
 export async function crearCliente(input: { codigo: string; nombre: string }) {
