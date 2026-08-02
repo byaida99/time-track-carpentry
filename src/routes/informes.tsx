@@ -279,16 +279,29 @@ function Informes() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-end">
-            <Button
-              onClick={exportar}
-              variant="secondary"
-              className="w-full"
-              disabled={!filtrados.length}
-            >
-              <Download className="mr-2 size-4" /> Exportar CSV
-            </Button>
+          <div className="grid gap-2 sm:col-span-2 lg:col-span-3">
+            <Label className="label-caps">Exportar</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <Button onClick={exportar} variant="secondary" disabled={!filtrados.length}>
+                <Download className="mr-2 size-4" /> CSV detalle
+              </Button>
+              <Button
+                onClick={() => exportarExcel("proyectos")}
+                variant="secondary"
+                disabled={!filtrados.length}
+              >
+                <Download className="mr-2 size-4" /> Excel por proyecto
+              </Button>
+              <Button
+                onClick={() => exportarExcel("operarios")}
+                variant="secondary"
+                disabled={!filtrados.length}
+              >
+                <Download className="mr-2 size-4" /> Excel por operario
+              </Button>
+            </div>
           </div>
+
         </CardContent>
       </Card>
 
