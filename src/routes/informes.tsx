@@ -113,6 +113,94 @@ function Informes() {
     URL.revokeObjectURL(url);
   }
 
+  async function exportarExcel(modo: "proyectos" | "operarios") {
+    const XLSX = await import("xlsx");
+    const libro = XLSX.utils.book_new();
+    const cabecera = [
+      "Fecha",
+      "Operario",
+      "Área",
+      "Cliente",
+      "Proyecto",
+      "Inicio",
+      "Fin",
+      "Horas",
+      "Descripción",
+    ];
+    const fila = (p: (typeof filtrados)[number]) => [
+      p.fecha,
+      p.operario?.nombre ?? "",
+      p.operario?.area ?? "",
+      `${p.cliente?.codigo ?? ""} ${p.cliente?.nombre ?? ""}`.trim(),
+      `${p.proyecto?.codigo ?? ""} ${p.proyecto?.nombre ?? ""}`.trim(),
+      hhmm(p.hora_inicio),
+      hhmm(p.hora_fin),
+      Number(horasDecimal(p.minutos)),
+      p.descripcion,
+    ];
+
+    if (modo === "proyectos") {
+      const grupos = new Map<string, typeof filtrados>();
+      for (const p of filtrados) {
+        const clave = `${p.cliente?.codigo ?? "—"} / ${p.proyecto?.codigo ?? "—"}`;
+        grupos.set(clave, [...(grupos.get(clave) ?? []), p]);
+      }
+      const filas: (string | number)[][] = [];
+      for (const [clave, items] of [...grupos.entries()].sort()) {
+        filas.push([clave]);
+        filas.push(cabecera);
+        for (const p of items) filas.push(fila(p));
+        filas.push([
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Total",
+          Number(horasDecimal(items.reduce((a, p) => a + p.minutos, 0))),
+        ]);
+        filas.push([]);
+      }
+      const hoja = XLSX.utils.aoa_to_sheet(filas.length ? filas : [cabecera]);
+      hoja["!cols"] = cabecera.map(() => ({ wch: 16 }));
+      XLSX.utils.book_append_sheet(libro, hoja, "Por proyecto");
+      XLSX.writeFile(libro, "partes-por-proyecto.xlsx");
+      return;
+    }
+
+    const grupos = new Map<string, typeof filtrados>();
+    for (const p of filtrados) {
+      const clave = p.operario?.nombre ?? "Sin operario";
+      grupos.set(clave, [...(grupos.get(clave) ?? []), p]);
+    }
+    const usados = new Set<string>();
+    for (const [nombre, items] of [...grupos.entries()].sort()) {
+      const filas: (string | number)[][] = [cabecera, ...items.map(fila)];
+      filas.push([
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Total",
+        Number(horasDecimal(items.reduce((a, p) => a + p.minutos, 0))),
+      ]);
+      const hoja = XLSX.utils.aoa_to_sheet(filas);
+      hoja["!cols"] = cabecera.map(() => ({ wch: 16 }));
+      let titulo = nombre.replace(/[\\/?*[\]:]/g, " ").slice(0, 28) || "Operario";
+      let n = 2;
+      while (usados.has(titulo)) titulo = `${titulo.slice(0, 25)} ${n++}`;
+      usados.add(titulo);
+      XLSX.utils.book_append_sheet(libro, hoja, titulo);
+    }
+    if (!usados.size) {
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([cabecera]), "Sin datos");
+    }
+    XLSX.writeFile(libro, "partes-por-operario.xlsx");
+  }
+
   return (
     <AppShell title="Informes" subtitle="Filtra, revisa totales y exporta las horas registradas.">
       <Card className="border-border shadow-plank">
