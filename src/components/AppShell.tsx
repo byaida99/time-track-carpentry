@@ -2,11 +2,8 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Hammer } from "lucide-react";
 
-const nav = [
-  { to: "/", label: "Fichar" },
-  { to: "/informes", label: "Informes" },
-  { to: "/datos", label: "Clientes y proyectos" },
-] as const;
+import { usePermisos } from "@/lib/permisos";
+import { useSesion } from "@/lib/sesion";
 
 export function AppShell({
   title,
@@ -17,6 +14,17 @@ export function AppShell({
   subtitle?: string;
   children: ReactNode;
 }) {
+  const { sesion } = useSesion();
+  const { puedeGestionarDatos, puedeVerInformes } = usePermisos();
+
+  const nav = [
+    { to: "/", label: "Fichar", ver: true },
+    { to: "/calendario", label: "Calendario", ver: Boolean(sesion) },
+    { to: "/perfil", label: "Mi perfil", ver: Boolean(sesion) },
+    { to: "/informes", label: "Informes", ver: puedeVerInformes },
+    { to: "/datos", label: "Clientes y proyectos", ver: puedeGestionarDatos },
+  ].filter((item) => item.ver);
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-border bg-card/80 backdrop-blur">

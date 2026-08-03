@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 
+import { usePermisos } from "@/lib/permisos";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,10 +48,12 @@ export const Route = createFileRoute("/informes")({
 const TODOS = "todos";
 
 function Informes() {
+  const permisos = usePermisos();
   const partes = useQuery(partesQuery);
   const operarios = useQuery(operariosQuery);
   const clientes = useQuery(clientesQuery);
   const proyectos = useQuery(proyectosQuery);
+
 
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
@@ -201,8 +204,22 @@ function Informes() {
     XLSX.writeFile(libro, "partes-por-operario.xlsx");
   }
 
+  if (permisos.cargando) return <AppShell title="Informes">{null}</AppShell>;
+
+  if (!permisos.puedeVerInformes) {
+    return (
+      <AppShell title="Informes">
+        <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No tienes permisos para ver los informes globales. Consulta tus horas en «Mi perfil» o en
+          el calendario.
+        </p>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Informes" subtitle="Filtra, revisa totales y exporta las horas registradas.">
+
       <Card className="border-border shadow-plank">
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="grid gap-2">

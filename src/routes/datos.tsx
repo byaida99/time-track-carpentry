@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import {
   actualizarOperario,
+  asignarRol,
   borrarCliente,
   formatoHoras,
 
@@ -29,10 +30,15 @@ import {
   crearOperario,
   crearProyecto,
   establecerPin,
-
+  ETIQUETA_ROL,
+  quitarRol,
+  rolesQuery,
   operariosQuery,
   proyectosQuery,
+  type Rol,
 } from "@/lib/api";
+import { usePermisos } from "@/lib/permisos";
+
 
 export const Route = createFileRoute("/datos")({
   head: () => ({
@@ -54,6 +60,21 @@ export const Route = createFileRoute("/datos")({
 });
 
 function Datos() {
+  const { esAdmin, puedeGestionarDatos, cargando } = usePermisos();
+
+  if (cargando) return <AppShell title="Clientes y proyectos">{null}</AppShell>;
+
+  if (!puedeGestionarDatos) {
+    return (
+      <AppShell title="Clientes y proyectos">
+        <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No tienes permisos para esta sección. Solo el área técnica y administración pueden
+          gestionar clientes, proyectos y operarios.
+        </p>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell
       title="Clientes y proyectos"
@@ -63,7 +84,7 @@ function Datos() {
         <TabsList>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
-          <TabsTrigger value="operarios">Operarios</TabsTrigger>
+          {esAdmin ? <TabsTrigger value="operarios">Operarios y permisos</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="clientes" className="mt-6">
           <Clientes />
@@ -71,13 +92,16 @@ function Datos() {
         <TabsContent value="proyectos" className="mt-6">
           <Proyectos />
         </TabsContent>
-        <TabsContent value="operarios" className="mt-6">
-          <Operarios />
-        </TabsContent>
+        {esAdmin ? (
+          <TabsContent value="operarios" className="mt-6">
+            <Operarios />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </AppShell>
   );
 }
+
 
 function useCrud(key: string) {
   const qc = useQueryClient();
@@ -248,10 +272,20 @@ function Proyectos() {
 
 function Operarios() {
   const operarios = useQuery(operariosQuery);
+  const roles = useQuery(rolesQuery);
   const opts = useCrud("operarios");
+  const optsRoles = useCrud("operario_roles");
   const crear = useMutation(opts(crearOperario as never, "Operario guardado"));
   const borrar = useMutation(opts(borrarOperario as never, "Operario eliminado"));
   const guardarJornada = useMutation(opts(actualizarOperario as never, "Jornada actualizada"));
+  const dar = useMutation(optsRoles(asignarRol as never, "Permiso concedido"));
+  const quitar = useMutation(optsRoles(quitarRol as never, "Permiso retirado"));
+
+  const TODOS_ROLES: Rol[] = ["operario", "area_tecnica", "administracion"];
+  function tieneRol(operarioId: string, rol: Rol) {
+    return (roles.data ?? []).some((r) => r.operario_id === operarioId && r.role === rol);
+  }
+
   const [nombre, setNombre] = useState("");
   const [area, setArea] = useState("taller");
   const [pin, setPin] = useState("");
@@ -419,6 +453,29 @@ function Operarios() {
                   </Button>
                 </div>
               </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="label-caps text-muted-foreground">Permisos</span>
+                {TODOS_ROLES.map((rol) => {
+                  const activo = tieneRol(o.id, rol);
+                  return (
+                    <Button
+                      key={rol}
+                      type="button"
+                      size="sm"
+                      variant={activo ? "default" : "outline"}
+                      disabled={dar.isPending || quitar.isPending}
+                      onClick={() =>
+                        activo
+                          ? quitar.mutate({ operario_id: o.id, role: rol } as never)
+                          : dar.mutate({ operario_id: o.id, role: rol } as never)
+                      }
+                    >
+                      {ETIQUETA_ROL[rol]}
+                    </Button>
+                  );
+                })}
+              </div>
+
               {jornadaDe === o.id ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto]">
                   <div className="grid gap-1">
