@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as DatosRouteImport } from './routes/datos'
 import { Route as InformesRouteImport } from './routes/informes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarioRoute = CalendarioRouteImport.update({
+  id: '/calendario',
+  path: '/calendario',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DatosRoute = DatosRouteImport.update({
@@ -31,30 +37,34 @@ const InformesRoute = InformesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calendario': typeof CalendarioRoute
   '/datos': typeof DatosRoute
   '/informes': typeof InformesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calendario': typeof CalendarioRoute
   '/datos': typeof DatosRoute
   '/informes': typeof InformesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calendario': typeof CalendarioRoute
   '/datos': typeof DatosRoute
   '/informes': typeof InformesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/datos' | '/informes'
+  fullPaths: '/' | '/calendario' | '/datos' | '/informes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/datos' | '/informes'
-  id: '__root__' | '/' | '/datos' | '/informes'
+  to: '/' | '/calendario' | '/datos' | '/informes'
+  id: '__root__' | '/' | '/calendario' | '/datos' | '/informes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalendarioRoute: typeof CalendarioRoute
   DatosRoute: typeof DatosRoute
   InformesRoute: typeof InformesRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendario': {
+      id: '/calendario'
+      path: '/calendario'
+      fullPath: '/calendario'
+      preLoaderRoute: typeof CalendarioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/datos': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalendarioRoute: CalendarioRoute,
   DatosRoute: DatosRoute,
   InformesRoute: InformesRoute,
 }
