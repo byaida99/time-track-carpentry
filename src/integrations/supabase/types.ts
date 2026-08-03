@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendario: {
+        Row: {
+          created_at: string
+          descripcion: string
+          fecha: string
+          id: string
+          operario_id: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string
+          fecha: string
+          id?: string
+          operario_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string
+          fecha?: string
+          id?: string
+          operario_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendario_operario_id_fkey"
+            columns: ["operario_id"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           codigo: string
@@ -34,6 +72,35 @@ export type Database = {
           nombre?: string
         }
         Relationships: []
+      }
+      operario_roles: {
+        Row: {
+          created_at: string
+          id: string
+          operario_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          operario_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          operario_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operario_roles_operario_id_fkey"
+            columns: ["operario_id"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operarios: {
         Row: {
@@ -189,7 +256,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "operario" | "area_tecnica" | "administracion"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -316,6 +383,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["operario", "area_tecnica", "administracion"],
+    },
   },
 } as const
