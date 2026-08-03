@@ -47,10 +47,12 @@ export const Route = createFileRoute("/informes")({
 const TODOS = "todos";
 
 function Informes() {
+  const permisos = usePermisos();
   const partes = useQuery(partesQuery);
   const operarios = useQuery(operariosQuery);
   const clientes = useQuery(clientesQuery);
   const proyectos = useQuery(proyectosQuery);
+
 
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
