@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import {
   actualizarOperario,
+  asignarRol,
   borrarCliente,
   formatoHoras,
 
@@ -29,10 +30,15 @@ import {
   crearOperario,
   crearProyecto,
   establecerPin,
-
+  ETIQUETA_ROL,
+  quitarRol,
+  rolesQuery,
   operariosQuery,
   proyectosQuery,
+  type Rol,
 } from "@/lib/api";
+import { usePermisos } from "@/lib/permisos";
+
 
 export const Route = createFileRoute("/datos")({
   head: () => ({
