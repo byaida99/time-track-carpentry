@@ -179,7 +179,9 @@ export async function crearOperario(input: {
     .single();
   if (error) throw new Error(error.message);
   await establecerPin(data.id, input.pin);
+  await asignarRol({ operario_id: data.id, role: "operario" });
 }
+
 
 export async function actualizarOperario(input: {
   id: string;
