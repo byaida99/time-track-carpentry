@@ -54,6 +54,21 @@ export const Route = createFileRoute("/datos")({
 });
 
 function Datos() {
+  const { esAdmin, puedeGestionarDatos, cargando } = usePermisos();
+
+  if (cargando) return <AppShell title="Clientes y proyectos">{null}</AppShell>;
+
+  if (!puedeGestionarDatos) {
+    return (
+      <AppShell title="Clientes y proyectos">
+        <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No tienes permisos para esta sección. Solo el área técnica y administración pueden
+          gestionar clientes, proyectos y operarios.
+        </p>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell
       title="Clientes y proyectos"
@@ -63,7 +78,7 @@ function Datos() {
         <TabsList>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
-          <TabsTrigger value="operarios">Operarios</TabsTrigger>
+          {esAdmin ? <TabsTrigger value="operarios">Operarios y permisos</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="clientes" className="mt-6">
           <Clientes />
@@ -71,13 +86,16 @@ function Datos() {
         <TabsContent value="proyectos" className="mt-6">
           <Proyectos />
         </TabsContent>
-        <TabsContent value="operarios" className="mt-6">
-          <Operarios />
-        </TabsContent>
+        {esAdmin ? (
+          <TabsContent value="operarios" className="mt-6">
+            <Operarios />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </AppShell>
   );
 }
+
 
 function useCrud(key: string) {
   const qc = useQueryClient();
