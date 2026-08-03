@@ -272,10 +272,20 @@ function Proyectos() {
 
 function Operarios() {
   const operarios = useQuery(operariosQuery);
+  const roles = useQuery(rolesQuery);
   const opts = useCrud("operarios");
+  const optsRoles = useCrud("operario_roles");
   const crear = useMutation(opts(crearOperario as never, "Operario guardado"));
   const borrar = useMutation(opts(borrarOperario as never, "Operario eliminado"));
   const guardarJornada = useMutation(opts(actualizarOperario as never, "Jornada actualizada"));
+  const dar = useMutation(optsRoles(asignarRol as never, "Permiso concedido"));
+  const quitar = useMutation(optsRoles(quitarRol as never, "Permiso retirado"));
+
+  const TODOS_ROLES: Rol[] = ["operario", "area_tecnica", "administracion"];
+  function tieneRol(operarioId: string, rol: Rol) {
+    return (roles.data ?? []).some((r) => r.operario_id === operarioId && r.role === rol);
+  }
+
   const [nombre, setNombre] = useState("");
   const [area, setArea] = useState("taller");
   const [pin, setPin] = useState("");
