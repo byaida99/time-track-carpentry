@@ -261,3 +261,93 @@ export const ETIQUETA_TIPO: Record<string, string> = {
   desayuno: "Desayuno",
   comida: "Comida",
 };
+
+/* ---------------- Roles ---------------- */
+
+export type Rol = "operario" | "area_tecnica" | "administracion";
+
+export const ETIQUETA_ROL: Record<Rol, string> = {
+  operario: "Operario",
+  area_tecnica: "Área técnica",
+  administracion: "Administración",
+};
+
+export type OperarioRol = { id: string; operario_id: string; role: Rol };
+
+export const rolesQuery = {
+  queryKey: ["operario_roles"],
+  queryFn: async () =>
+    unwrap<OperarioRol[]>(
+      await supabase.from("operario_roles").select("id, operario_id, role") as never,
+    ),
+};
+
+export async function asignarRol(input: { operario_id: string; role: Rol }) {
+  const { error } = await supabase.from("operario_roles").insert(input as never);
+  if (error) throw new Error(error.message);
+}
+
+export async function quitarRol(input: { operario_id: string; role: Rol }) {
+  const { error } = await supabase
+    .from("operario_roles")
+    .delete()
+    .eq("operario_id", input.operario_id)
+    .eq("role", input.role);
+  if (error) throw new Error(error.message);
+}
+
+/* ---------------- Calendario laboral ---------------- */
+
+export type TipoDia = "festivo" | "vacaciones";
+
+export type DiaCalendario = {
+  id: string;
+  fecha: string;
+  tipo: TipoDia;
+  operario_id: string | null;
+  descripcion: string;
+};
+
+export const ETIQUETA_DIA: Record<TipoDia, string> = {
+  festivo: "Festivo",
+  vacaciones: "Vacaciones",
+};
+
+export const calendarioQuery = {
+  queryKey: ["calendario"],
+  queryFn: async () =>
+    unwrap<DiaCalendario[]>(
+      await supabase
+        .from("calendario")
+        .select("id, fecha, tipo, operario_id, descripcion")
+        .order("fecha") as never,
+    ),
+};
+
+export async function crearDias(input: {
+  desde: string;
+  hasta: string;
+  tipo: TipoDia;
+  operario_id: string | null;
+  descripcion: string;
+}) {
+  const filas: Omit<DiaCalendario, "id">[] = [];
+  const fin = new Date(`${input.hasta}T00:00:00`);
+  for (const d = new Date(`${input.desde}T00:00:00`); d <= fin; d.setDate(d.getDate() + 1)) {
+    filas.push({
+      fecha: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+      tipo: input.tipo,
+      operario_id: input.operario_id,
+      descripcion: input.descripcion,
+    });
+  }
+  if (filas.length === 0) throw new Error("El rango de fechas no es válido");
+  if (filas.length > 400) throw new Error("El rango es demasiado largo");
+  const { error } = await supabase.from("calendario").insert(filas as never);
+  if (error) throw new Error(error.message);
+}
+
+export async function borrarDia(id: string) {
+  const { error } = await supabase.from("calendario").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
