@@ -204,8 +204,22 @@ function Informes() {
     XLSX.writeFile(libro, "partes-por-operario.xlsx");
   }
 
+  if (permisos.cargando) return <AppShell title="Informes">{null}</AppShell>;
+
+  if (!permisos.puedeVerInformes) {
+    return (
+      <AppShell title="Informes">
+        <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No tienes permisos para ver los informes globales. Consulta tus horas en «Mi perfil» o en
+          el calendario.
+        </p>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Informes" subtitle="Filtra, revisa totales y exporta las horas registradas.">
+
       <Card className="border-border shadow-plank">
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="grid gap-2">
