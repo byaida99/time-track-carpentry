@@ -453,6 +453,29 @@ function Operarios() {
                   </Button>
                 </div>
               </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="label-caps text-muted-foreground">Permisos</span>
+                {TODOS_ROLES.map((rol) => {
+                  const activo = tieneRol(o.id, rol);
+                  return (
+                    <Button
+                      key={rol}
+                      type="button"
+                      size="sm"
+                      variant={activo ? "default" : "outline"}
+                      disabled={dar.isPending || quitar.isPending}
+                      onClick={() =>
+                        activo
+                          ? quitar.mutate({ operario_id: o.id, role: rol } as never)
+                          : dar.mutate({ operario_id: o.id, role: rol } as never)
+                      }
+                    >
+                      {ETIQUETA_ROL[rol]}
+                    </Button>
+                  );
+                })}
+              </div>
+
               {jornadaDe === o.id ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto]">
                   <div className="grid gap-1">
