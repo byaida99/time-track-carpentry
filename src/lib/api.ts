@@ -24,6 +24,8 @@ import {
   fnTienePin,
 } from "@/lib/api.functions";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { guardarSesion } from "@/lib/sesion";
 
 import { guardarToken, leerToken, useToken } from "@/lib/token";
 
@@ -86,7 +88,20 @@ function token() {
  */
 export function useDatos<T>(q: { queryKey: unknown[]; queryFn: () => Promise<T> }) {
   const t = useToken();
-  return useQuery({ ...q, queryKey: [...q.queryKey, Boolean(t)], enabled: Boolean(t) });
+  const res = useQuery({
+    ...q,
+    queryKey: [...q.queryKey, Boolean(t)],
+    enabled: Boolean(t),
+    retry: false,
+    throwOnError: false,
+  });
+
+  useEffect(() => {
+    const msg = res.error instanceof Error ? res.error.message : "";
+    if (msg.includes("Sesión no válida")) guardarSesion(null);
+  }, [res.error]);
+
+  return res;
 }
 
 
