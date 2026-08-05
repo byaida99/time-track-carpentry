@@ -23,7 +23,10 @@ import {
   fnQuitarRol,
   fnTienePin,
 } from "@/lib/api.functions";
-import { guardarToken, leerToken } from "@/lib/token";
+import { useQuery } from "@tanstack/react-query";
+
+import { guardarToken, leerToken, useToken } from "@/lib/token";
+
 
 export type Operario = {
   id: string;
