@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 
-import { rolesQuery, type Rol } from "@/lib/api";
+
+import { rolesQuery, useDatos, type Rol } from "@/lib/api";
 import { useSesion } from "@/lib/sesion";
 
 export type Permisos = {
