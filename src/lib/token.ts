@@ -24,19 +24,15 @@ export function guardarToken(token: string | null) {
  * en el primer render, de modo que ninguna consulta protegida se lanza sin
  * sesión (lo que provocaría un error «Sesión no válida»).
  */
+function suscribir(cb: () => void) {
+  window.addEventListener(EVENTO_TOKEN, cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener(EVENTO_TOKEN, cb);
+    window.removeEventListener("storage", cb);
+  };
+}
+
 export function useToken(): string | null {
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const sync = () => setToken(leerToken());
-    sync();
-    window.addEventListener(EVENTO_TOKEN, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(EVENTO_TOKEN, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-
-  return token;
+  return useSyncExternalStore(suscribir, leerToken, () => null);
 }
