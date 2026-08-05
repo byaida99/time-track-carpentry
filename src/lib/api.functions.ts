@@ -34,14 +34,16 @@ export const fnCrearOperario = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.crearOperarioSchema.parse(d))
   .handler(async ({ data }) => {
     const { crearOperario } = await import("@/lib/datos.server");
-    return crearOperario(data.token, data);
+    const { token, ...input } = data;
+    return crearOperario(token, input);
   });
 
 export const fnActualizarOperario = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.actualizarOperarioSchema.parse(d))
   .handler(async ({ data }) => {
     const { actualizarOperario } = await import("@/lib/datos.server");
-    return actualizarOperario(data.token, data);
+    const { token, ...input } = data;
+    return actualizarOperario(token, input);
   });
 
 export const fnBorrarOperario = createServerFn({ method: "POST" })
@@ -62,7 +64,8 @@ export const fnCrearCliente = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.crearClienteSchema.parse(d))
   .handler(async ({ data }) => {
     const { crearCliente } = await import("@/lib/datos.server");
-    return crearCliente(data.token, data);
+    const { token, ...input } = data;
+    return crearCliente(token, input);
   });
 
 export const fnBorrarCliente = createServerFn({ method: "POST" })
@@ -83,7 +86,8 @@ export const fnCrearProyecto = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.crearProyectoSchema.parse(d))
   .handler(async ({ data }) => {
     const { crearProyecto } = await import("@/lib/datos.server");
-    return crearProyecto(data.token, data);
+    const { token, ...input } = data;
+    return crearProyecto(token, input);
   });
 
 export const fnBorrarProyecto = createServerFn({ method: "POST" })
@@ -104,14 +108,16 @@ export const fnCrearParte = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.crearParteSchema.parse(d))
   .handler(async ({ data }) => {
     const { crearParte } = await import("@/lib/datos.server");
-    return crearParte(data.token, data);
+    const { token, ...input } = data;
+    return crearParte(token, input);
   });
 
 export const fnActualizarParte = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.actualizarParteSchema.parse(d))
   .handler(async ({ data }) => {
     const { actualizarParte } = await import("@/lib/datos.server");
-    return actualizarParte(data.token, data);
+    const { token, ...input } = data;
+    return actualizarParte(token, input);
   });
 
 export const fnBorrarParte = createServerFn({ method: "POST" })
@@ -153,7 +159,8 @@ export const fnCrearDias = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => S.crearDiasSchema.parse(d))
   .handler(async ({ data }) => {
     const { crearDias } = await import("@/lib/datos.server");
-    return crearDias(data.token, data);
+    const { token, ...input } = data;
+    return crearDias(token, input);
   });
 
 export const fnBorrarDia = createServerFn({ method: "POST" })
