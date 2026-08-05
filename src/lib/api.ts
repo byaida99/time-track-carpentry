@@ -1,4 +1,29 @@
-import { supabase } from "@/integrations/supabase/client";
+import {
+  fnActualizarOperario,
+  fnActualizarParte,
+  fnAsignarRol,
+  fnBorrarCliente,
+  fnBorrarDia,
+  fnBorrarOperario,
+  fnBorrarParte,
+  fnBorrarProyecto,
+  fnCrearCliente,
+  fnCrearDias,
+  fnCrearOperario,
+  fnCrearParte,
+  fnCrearProyecto,
+  fnEstablecerPin,
+  fnListarCalendario,
+  fnListarClientes,
+  fnListarOperarios,
+  fnListarPartes,
+  fnListarProyectos,
+  fnListarRoles,
+  fnLogin,
+  fnQuitarRol,
+  fnTienePin,
+} from "@/lib/api.functions";
+import { guardarToken, leerToken } from "@/lib/token";
 
 export type Operario = {
   id: string;
@@ -47,57 +72,30 @@ export type ParteCompleto = Parte & {
   proyecto: { codigo: string; nombre: string } | null;
 };
 
-function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
-  if (res.error) throw new Error(res.error.message);
-  return (res.data ?? []) as T;
+function token() {
+  return leerToken();
 }
 
 export const operariosQuery = {
   queryKey: ["operarios"],
   queryFn: async () =>
-    unwrap<Operario[]>(
-      await supabase
-        .from("operarios")
-        .select(
-          "id, nombre, area, activo, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos",
-        )
-        .order("nombre") as never,
-    ),
+    (await fnListarOperarios({ data: { token: token() } })) as Operario[],
 };
-
 
 export const clientesQuery = {
   queryKey: ["clientes"],
-  queryFn: async () =>
-    unwrap<Cliente[]>(
-      await supabase.from("clientes").select("id, codigo, nombre").order("codigo"),
-    ),
+  queryFn: async () => (await fnListarClientes({ data: { token: token() } })) as Cliente[],
 };
 
 export const proyectosQuery = {
   queryKey: ["proyectos"],
-  queryFn: async () =>
-    unwrap<Proyecto[]>(
-      await supabase
-        .from("proyectos")
-        .select("id, cliente_id, codigo, nombre, activo")
-        .order("codigo"),
-    ),
+  queryFn: async () => (await fnListarProyectos({ data: { token: token() } })) as Proyecto[],
 };
 
 export const partesQuery = {
   queryKey: ["partes"],
   queryFn: async () =>
-    unwrap<ParteCompleto[]>(
-      await supabase
-        .from("partes")
-        .select(
-          "*, operario:operarios(nombre, area), cliente:clientes(codigo, nombre), proyecto:proyectos(codigo, nombre)",
-        )
-        .order("fecha", { ascending: false })
-        .order("hora_inicio", { ascending: false })
-        .limit(500),
-    ),
+    (await fnListarPartes({ data: { token: token() } })) as unknown as ParteCompleto[],
 };
 
 export async function crearParte(input: {
@@ -110,8 +108,7 @@ export async function crearParte(input: {
   descripcion: string;
   tipo: TipoParte;
 }) {
-  const { error } = await supabase.from("partes").insert(input);
-  if (error) throw new Error(error.message);
+  await fnCrearParte({ data: { ...input, token: token() } });
 }
 
 export async function actualizarParte(input: {
@@ -124,40 +121,29 @@ export async function actualizarParte(input: {
   descripcion: string;
   tipo: TipoParte;
 }) {
-  const { id, ...cambios } = input;
-  const { error } = await supabase.from("partes").update(cambios).eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnActualizarParte({ data: { ...input, token: token() } });
 }
 
-
 export async function borrarParte(id: string) {
-  const { error } = await supabase.from("partes").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnBorrarParte({ data: { id, token: token() } });
 }
 
 export async function verificarPin(operarioId: string, pin: string) {
-  const { data, error } = await supabase.rpc("verificar_pin", {
-    _operario_id: operarioId,
-    _pin: pin,
-  });
-  if (error) throw new Error(error.message);
-  return data === true;
+  const res = await fnLogin({ data: { operario_id: operarioId, pin } });
+  if (!res.ok) {
+    guardarToken(null);
+    return false;
+  }
+  guardarToken(res.token);
+  return true;
 }
 
 export async function establecerPin(operarioId: string, pin: string) {
-  const { error } = await supabase.rpc("establecer_pin", {
-    _operario_id: operarioId,
-    _pin: pin,
-  });
-  if (error) throw new Error(error.message);
+  await fnEstablecerPin({ data: { operario_id: operarioId, pin, token: token() } });
 }
 
 export async function tienePin(operarioId: string) {
-  const { data, error } = await supabase.rpc("operario_tiene_pin", {
-    _operario_id: operarioId,
-  });
-  if (error) throw new Error(error.message);
-  return data === true;
+  return (await fnTienePin({ data: { operario_id: operarioId, token: token() } })) === true;
 }
 
 export async function crearOperario(input: {
@@ -167,21 +153,8 @@ export async function crearOperario(input: {
   jornada_minutos?: number;
   hora_entrada?: string;
 }) {
-  const { data, error } = await supabase
-    .from("operarios")
-    .insert({
-      nombre: input.nombre,
-      area: input.area,
-      ...(input.jornada_minutos ? { jornada_minutos: input.jornada_minutos } : {}),
-      ...(input.hora_entrada ? { hora_entrada: input.hora_entrada } : {}),
-    } as never)
-    .select("id")
-    .single();
-  if (error) throw new Error(error.message);
-  await establecerPin(data.id, input.pin);
-  await asignarRol({ operario_id: data.id, role: "operario" });
+  await fnCrearOperario({ data: { ...input, token: token() } });
 }
-
 
 export async function actualizarOperario(input: {
   id: string;
@@ -190,29 +163,19 @@ export async function actualizarOperario(input: {
   desayuno_minutos: number;
   comida_minutos: number;
 }) {
-  const { id, ...cambios } = input;
-  const { error } = await supabase
-    .from("operarios")
-    .update(cambios as never)
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnActualizarOperario({ data: { ...input, token: token() } });
 }
 
 export async function borrarOperario(id: string) {
-  const { error } = await supabase.from("operarios").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnBorrarOperario({ data: { id, token: token() } });
 }
 
-
-
 export async function crearCliente(input: { codigo: string; nombre: string }) {
-  const { error } = await supabase.from("clientes").insert(input);
-  if (error) throw new Error(error.message);
+  await fnCrearCliente({ data: { ...input, token: token() } });
 }
 
 export async function borrarCliente(id: string) {
-  const { error } = await supabase.from("clientes").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnBorrarCliente({ data: { id, token: token() } });
 }
 
 export async function crearProyecto(input: {
@@ -220,13 +183,11 @@ export async function crearProyecto(input: {
   codigo: string;
   nombre: string;
 }) {
-  const { error } = await supabase.from("proyectos").insert(input);
-  if (error) throw new Error(error.message);
+  await fnCrearProyecto({ data: { ...input, token: token() } });
 }
 
 export async function borrarProyecto(id: string) {
-  const { error } = await supabase.from("proyectos").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnBorrarProyecto({ data: { id, token: token() } });
 }
 
 export function formatoHoras(minutos: number) {
@@ -278,24 +239,15 @@ export type OperarioRol = { id: string; operario_id: string; role: Rol };
 
 export const rolesQuery = {
   queryKey: ["operario_roles"],
-  queryFn: async () =>
-    unwrap<OperarioRol[]>(
-      await supabase.from("operario_roles").select("id, operario_id, role") as never,
-    ),
+  queryFn: async () => (await fnListarRoles({ data: { token: token() } })) as OperarioRol[],
 };
 
 export async function asignarRol(input: { operario_id: string; role: Rol }) {
-  const { error } = await supabase.from("operario_roles").insert(input as never);
-  if (error) throw new Error(error.message);
+  await fnAsignarRol({ data: { ...input, token: token() } });
 }
 
 export async function quitarRol(input: { operario_id: string; role: Rol }) {
-  const { error } = await supabase
-    .from("operario_roles")
-    .delete()
-    .eq("operario_id", input.operario_id)
-    .eq("role", input.role);
-  if (error) throw new Error(error.message);
+  await fnQuitarRol({ data: { ...input, token: token() } });
 }
 
 /* ---------------- Calendario laboral ---------------- */
@@ -318,12 +270,7 @@ export const ETIQUETA_DIA: Record<TipoDia, string> = {
 export const calendarioQuery = {
   queryKey: ["calendario"],
   queryFn: async () =>
-    unwrap<DiaCalendario[]>(
-      await supabase
-        .from("calendario")
-        .select("id, fecha, tipo, operario_id, descripcion")
-        .order("fecha") as never,
-    ),
+    (await fnListarCalendario({ data: { token: token() } })) as DiaCalendario[],
 };
 
 export async function crearDias(input: {
@@ -333,23 +280,9 @@ export async function crearDias(input: {
   operario_id: string | null;
   descripcion: string;
 }) {
-  const filas: Omit<DiaCalendario, "id">[] = [];
-  const fin = new Date(`${input.hasta}T00:00:00`);
-  for (const d = new Date(`${input.desde}T00:00:00`); d <= fin; d.setDate(d.getDate() + 1)) {
-    filas.push({
-      fecha: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
-      tipo: input.tipo,
-      operario_id: input.operario_id,
-      descripcion: input.descripcion,
-    });
-  }
-  if (filas.length === 0) throw new Error("El rango de fechas no es válido");
-  if (filas.length > 400) throw new Error("El rango es demasiado largo");
-  const { error } = await supabase.from("calendario").insert(filas as never);
-  if (error) throw new Error(error.message);
+  await fnCrearDias({ data: { ...input, token: token() } });
 }
 
 export async function borrarDia(id: string) {
-  const { error } = await supabase.from("calendario").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await fnBorrarDia({ data: { id, token: token() } });
 }
