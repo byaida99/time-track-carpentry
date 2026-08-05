@@ -24,6 +24,7 @@ import {
   operariosQuery,
   partesQuery,
   proyectosQuery,
+  useDatos,
 } from "@/lib/api";
 
 export const Route = createFileRoute("/informes")({

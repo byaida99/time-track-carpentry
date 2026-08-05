@@ -13,6 +13,7 @@ import {
   hoy,
   operariosQuery,
   partesQuery,
+  useDatos,
 } from "@/lib/api";
 import { usePermisos } from "@/lib/permisos";
 import { useSesion } from "@/lib/sesion";

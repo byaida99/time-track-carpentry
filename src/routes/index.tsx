@@ -35,6 +35,7 @@ import {
   proyectosQuery,
   verificarPin,
   type Operario,
+  useDatos,
 } from "@/lib/api";
 import { guardarSesion, useSesion } from "@/lib/sesion";
 
