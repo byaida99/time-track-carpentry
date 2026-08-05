@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const CLAVE_TOKEN = "operario-token";
 const EVENTO_TOKEN = "operario-token-cambio";
