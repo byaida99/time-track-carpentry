@@ -24,6 +24,8 @@ import {
   fnTienePin,
 } from "@/lib/api.functions";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { guardarSesion } from "@/lib/sesion";
 
 import { guardarToken, leerToken, useToken } from "@/lib/token";
 
