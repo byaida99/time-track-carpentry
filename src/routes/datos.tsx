@@ -117,7 +117,7 @@ function useCrud(key: string) {
 }
 
 function Clientes() {
-  const clientes = useQuery(clientesQuery);
+  const clientes = useDatos(clientesQuery);
   const opts = useCrud("clientes");
   const crear = useMutation(opts(crearCliente as never, "Cliente guardado"));
   const borrar = useMutation(opts(borrarCliente as never, "Cliente eliminado"));
@@ -180,8 +180,8 @@ function Clientes() {
 }
 
 function Proyectos() {
-  const clientes = useQuery(clientesQuery);
-  const proyectos = useQuery(proyectosQuery);
+  const clientes = useDatos(clientesQuery);
+  const proyectos = useDatos(proyectosQuery);
   const opts = useCrud("proyectos");
   const crear = useMutation(opts(crearProyecto as never, "Proyecto guardado"));
   const borrar = useMutation(opts(borrarProyecto as never, "Proyecto eliminado"));
@@ -271,8 +271,8 @@ function Proyectos() {
 }
 
 function Operarios() {
-  const operarios = useQuery(operariosQuery);
-  const roles = useQuery(rolesQuery);
+  const operarios = useDatos(operariosQuery);
+  const roles = useDatos(rolesQuery);
   const opts = useCrud("operarios");
   const optsRoles = useCrud("operario_roles");
   const crear = useMutation(opts(crearOperario as never, "Operario guardado"));

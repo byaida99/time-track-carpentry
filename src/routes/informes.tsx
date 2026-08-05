@@ -49,10 +49,10 @@ const TODOS = "todos";
 
 function Informes() {
   const permisos = usePermisos();
-  const partes = useQuery(partesQuery);
-  const operarios = useQuery(operariosQuery);
-  const clientes = useQuery(clientesQuery);
-  const proyectos = useQuery(proyectosQuery);
+  const partes = useDatos(partesQuery);
+  const operarios = useDatos(operariosQuery);
+  const clientes = useDatos(clientesQuery);
+  const proyectos = useDatos(proyectosQuery);
 
 
   const [desde, setDesde] = useState("");

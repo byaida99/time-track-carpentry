@@ -78,9 +78,9 @@ function Pagina() {
   const { esAdmin } = usePermisos();
   const qc = useQueryClient();
 
-  const calendario = useQuery(calendarioQuery);
-  const partes = useQuery(partesQuery);
-  const operarios = useQuery(operariosQuery);
+  const calendario = useDatos(calendarioQuery);
+  const partes = useDatos(partesQuery);
+  const operarios = useDatos(operariosQuery);
 
   const inicial = new Date();
   const [mes, setMes] = useState({ anio: inicial.getFullYear(), mes: inicial.getMonth() });

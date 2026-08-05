@@ -13,7 +13,7 @@ export type Permisos = {
 
 export function usePermisos(): Permisos {
   const { sesion, cargando } = useSesion();
-  const roles = useQuery(rolesQuery);
+  const roles = useDatos(rolesQuery);
 
   const propios = (roles.data ?? [])
     .filter((r) => r.operario_id === sesion?.id)

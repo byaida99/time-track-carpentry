@@ -40,9 +40,9 @@ export const Route = createFileRoute("/perfil")({
 function Perfil() {
   const { sesion } = useSesion();
   const { roles } = usePermisos();
-  const operarios = useQuery(operariosQuery);
-  const partes = useQuery(partesQuery);
-  const calendario = useQuery(calendarioQuery);
+  const operarios = useDatos(operariosQuery);
+  const partes = useDatos(partesQuery);
+  const calendario = useDatos(calendarioQuery);
 
   const yo = (operarios.data ?? []).find((o) => o.id === sesion?.id);
 
