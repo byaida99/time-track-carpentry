@@ -35,6 +35,7 @@ import {
   proyectosQuery,
   verificarPin,
   type Operario,
+  useDatos,
 } from "@/lib/api";
 import { guardarSesion, useSesion } from "@/lib/sesion";
 
@@ -180,10 +181,10 @@ function Fichar({
   salir: () => void;
 }) {
   const qc = useQueryClient();
-  const clientes = useQuery(clientesQuery);
-  const proyectos = useQuery(proyectosQuery);
-  const partes = useQuery(partesQuery);
-  const operarios = useQuery(operariosQuery);
+  const clientes = useDatos(clientesQuery);
+  const proyectos = useDatos(proyectosQuery);
+  const partes = useDatos(partesQuery);
+  const operarios = useDatos(operariosQuery);
 
   const config = useMemo(() => {
     const o = (operarios.data ?? []).find((x) => x.id === sesion.id);

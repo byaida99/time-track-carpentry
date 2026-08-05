@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -28,6 +28,7 @@ import {
   operariosQuery,
   partesQuery,
   type TipoDia,
+  useDatos,
 } from "@/lib/api";
 import { usePermisos } from "@/lib/permisos";
 import { useSesion } from "@/lib/sesion";
@@ -78,9 +79,9 @@ function Pagina() {
   const { esAdmin } = usePermisos();
   const qc = useQueryClient();
 
-  const calendario = useQuery(calendarioQuery);
-  const partes = useQuery(partesQuery);
-  const operarios = useQuery(operariosQuery);
+  const calendario = useDatos(calendarioQuery);
+  const partes = useDatos(partesQuery);
+  const operarios = useDatos(operariosQuery);
 
   const inicial = new Date();
   const [mes, setMes] = useState({ anio: inicial.getFullYear(), mes: inicial.getMonth() });

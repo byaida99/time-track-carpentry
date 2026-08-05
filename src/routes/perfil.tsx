@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+
 import { useMemo } from "react";
 
 import { AppShell } from "@/components/AppShell";
@@ -13,6 +13,7 @@ import {
   hoy,
   operariosQuery,
   partesQuery,
+  useDatos,
 } from "@/lib/api";
 import { usePermisos } from "@/lib/permisos";
 import { useSesion } from "@/lib/sesion";
@@ -40,9 +41,9 @@ export const Route = createFileRoute("/perfil")({
 function Perfil() {
   const { sesion } = useSesion();
   const { roles } = usePermisos();
-  const operarios = useQuery(operariosQuery);
-  const partes = useQuery(partesQuery);
-  const calendario = useQuery(calendarioQuery);
+  const operarios = useDatos(operariosQuery);
+  const partes = useDatos(partesQuery);
+  const calendario = useDatos(calendarioQuery);
 
   const yo = (operarios.data ?? []).find((o) => o.id === sesion?.id);
 

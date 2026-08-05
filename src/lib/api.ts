@@ -23,7 +23,10 @@ import {
   fnQuitarRol,
   fnTienePin,
 } from "@/lib/api.functions";
-import { guardarToken, leerToken } from "@/lib/token";
+import { useQuery } from "@tanstack/react-query";
+
+import { guardarToken, leerToken, useToken } from "@/lib/token";
+
 
 export type Operario = {
   id: string;
@@ -75,6 +78,17 @@ export type ParteCompleto = Parte & {
 function token() {
   return leerToken();
 }
+
+/**
+ * Consulta protegida: solo se lanza cuando el navegador ya tiene un token de
+ * sesión. Así se evita el error «Sesión no válida» durante el SSR o antes de
+ * introducir el PIN.
+ */
+export function useDatos<T>(q: { queryKey: unknown[]; queryFn: () => Promise<T> }) {
+  const t = useToken();
+  return useQuery({ ...q, queryKey: [...q.queryKey, Boolean(t)], enabled: Boolean(t) });
+}
+
 
 export const operariosQuery = {
   queryKey: ["operarios"],
