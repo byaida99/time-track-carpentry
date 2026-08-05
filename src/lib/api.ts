@@ -86,7 +86,20 @@ function token() {
  */
 export function useDatos<T>(q: { queryKey: unknown[]; queryFn: () => Promise<T> }) {
   const t = useToken();
-  return useQuery({ ...q, queryKey: [...q.queryKey, Boolean(t)], enabled: Boolean(t) });
+  const res = useQuery({
+    ...q,
+    queryKey: [...q.queryKey, Boolean(t)],
+    enabled: Boolean(t),
+    retry: false,
+    throwOnError: false,
+  });
+
+  useEffect(() => {
+    const msg = res.error instanceof Error ? res.error.message : "";
+    if (msg.includes("Sesión no válida")) guardarSesion(null);
+  }, [res.error]);
+
+  return res;
 }
 
 
