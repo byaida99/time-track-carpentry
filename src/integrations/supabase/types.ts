@@ -54,18 +54,21 @@ export type Database = {
       }
       clientes: {
         Row: {
+          activo: boolean
           codigo: string
           created_at: string
           id: string
           nombre: string
         }
         Insert: {
+          activo?: boolean
           codigo: string
           created_at?: string
           id?: string
           nombre: string
         }
         Update: {
+          activo?: boolean
           codigo?: string
           created_at?: string
           id?: string
