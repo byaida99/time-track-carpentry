@@ -208,6 +208,126 @@ export type Database = {
           },
         ]
       }
+      pedidos: {
+        Row: {
+          cantidad: number
+          created_at: string
+          estado: string
+          foto_url: string | null
+          id: string
+          notas: string
+          operario_id: string
+          pedido_at: string | null
+          pedido_por: string | null
+          producto_id: string
+          updated_at: string
+        }
+        Insert: {
+          cantidad?: number
+          created_at?: string
+          estado?: string
+          foto_url?: string | null
+          id?: string
+          notas?: string
+          operario_id: string
+          pedido_at?: string | null
+          pedido_por?: string | null
+          producto_id: string
+          updated_at?: string
+        }
+        Update: {
+          cantidad?: number
+          created_at?: string
+          estado?: string
+          foto_url?: string | null
+          id?: string
+          notas?: string
+          operario_id?: string
+          pedido_at?: string | null
+          pedido_por?: string | null
+          producto_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_operario_id_fkey"
+            columns: ["operario_id"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_pedido_por_fkey"
+            columns: ["pedido_por"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productos: {
+        Row: {
+          activo: boolean
+          creado_por: string | null
+          created_at: string
+          descripcion: string
+          ficha_completa: boolean
+          foto_url: string | null
+          id: string
+          nombre: string
+          precio_estimado: number | null
+          proveedor: string
+          referencia: string
+          unidad: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          creado_por?: string | null
+          created_at?: string
+          descripcion?: string
+          ficha_completa?: boolean
+          foto_url?: string | null
+          id?: string
+          nombre: string
+          precio_estimado?: number | null
+          proveedor?: string
+          referencia?: string
+          unidad?: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          creado_por?: string | null
+          created_at?: string
+          descripcion?: string
+          ficha_completa?: boolean
+          foto_url?: string | null
+          id?: string
+          nombre?: string
+          precio_estimado?: number | null
+          proveedor?: string
+          referencia?: string
+          unidad?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proyectos: {
         Row: {
           activo: boolean
