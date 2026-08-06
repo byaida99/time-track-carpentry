@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Coffee, LogOut, Pencil, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { ClipboardList, Coffee, LogOut, Pencil, Trash2, UtensilsCrossed, X } from "lucide-react";
 
 
 import { AppShell } from "@/components/AppShell";
