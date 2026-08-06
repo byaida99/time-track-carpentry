@@ -169,3 +169,50 @@ export const fnBorrarDia = createServerFn({ method: "POST" })
     const { borrarDia } = await import("@/lib/datos.server");
     return borrarDia(data.token, data.id);
   });
+
+/* ---------------- Pedidos y productos ---------------- */
+
+export const fnListarProductos = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.soloToken.parse(d))
+  .handler(async ({ data }) => {
+    const { listarProductos } = await import("@/lib/datos.server");
+    return listarProductos(data.token);
+  });
+
+export const fnCrearProducto = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.crearProductoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { crearProducto } = await import("@/lib/datos.server");
+    const { token, ...input } = data;
+    return crearProducto(token, input);
+  });
+
+export const fnActualizarProducto = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.actualizarProductoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { actualizarProducto } = await import("@/lib/datos.server");
+    const { token, ...input } = data;
+    return actualizarProducto(token, input);
+  });
+
+export const fnListarPedidos = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.soloToken.parse(d))
+  .handler(async ({ data }) => {
+    const { listarPedidos } = await import("@/lib/datos.server");
+    return listarPedidos(data.token);
+  });
+
+export const fnCrearPedido = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.crearPedidoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { crearPedido } = await import("@/lib/datos.server");
+    const { token, ...input } = data;
+    return crearPedido(token, input);
+  });
+
+export const fnMarcarPedido = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.marcarPedidoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { marcarPedido } = await import("@/lib/datos.server");
+    return marcarPedido(data.token, data.id, data.pedido);
+  });
