@@ -382,9 +382,17 @@ function Fichar({
           Sesión de <span className="font-display font-semibold">{sesion.nombre}</span>{" "}
           <span className="text-muted-foreground">· {sesion.area}</span>
         </p>
-        <Button variant="outline" size="sm" onClick={salir}>
-          <LogOut className="mr-2 size-4" /> Salir
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/pedidos">
+              <ClipboardList className="mr-2 size-4" /> Pedidos
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" onClick={salir}>
+            <LogOut className="mr-2 size-4" /> Salir
+          </Button>
+        </div>
+
       </div>
 
       <Card className="mb-6 border-border shadow-plank">
