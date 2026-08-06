@@ -246,7 +246,7 @@ function Fichar({
   }, [proximoInicio, editandoId, pendiente]);
 
   const proyectosCliente = useMemo(
-    () => (proyectos.data ?? []).filter((p) => p.cliente_id === clienteId),
+    () => (proyectos.data ?? []).filter((p) => p.cliente_id === clienteId && p.activo),
     [proyectos.data, clienteId],
   );
 
@@ -478,7 +478,7 @@ function Fichar({
                     <SelectValue placeholder="Código de cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(clientes.data ?? []).map((c) => (
+                    {(clientes.data ?? []).filter((c) => c.activo).map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.codigo} — {c.nombre}
                       </SelectItem>

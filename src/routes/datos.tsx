@@ -19,9 +19,8 @@ import {
   actualizarOperario,
   asignarRol,
   cambiarEstadoCliente,
-  formatoHoras,
-
   cambiarEstadoOperario,
+  formatoHoras,
   cambiarEstadoProyecto,
   clientesQuery,
   crearCliente,
