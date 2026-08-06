@@ -12,6 +12,7 @@ const pin = z.string().regex(/^\d{4,8}$/, "El PIN debe tener entre 4 y 8 dígito
 
 export const soloToken = z.object({ token });
 export const tokenId = z.object({ token, id: uuid });
+export const estadoSchema = z.object({ token, id: uuid, activo: z.boolean() });
 export const tokenOperario = z.object({ token, operario_id: uuid });
 
 export const loginSchema = z.object({ operario_id: uuid, pin });

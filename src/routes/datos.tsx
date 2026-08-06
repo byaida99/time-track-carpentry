@@ -2,8 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
-
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,11 +18,10 @@ import {
 import {
   actualizarOperario,
   asignarRol,
-  borrarCliente,
+  cambiarEstadoCliente,
+  cambiarEstadoOperario,
   formatoHoras,
-
-  borrarOperario,
-  borrarProyecto,
+  cambiarEstadoProyecto,
   clientesQuery,
   crearCliente,
   crearOperario,
@@ -121,7 +118,7 @@ function Clientes() {
   const clientes = useDatos(clientesQuery);
   const opts = useCrud("clientes");
   const crear = useMutation(opts(crearCliente as never, "Cliente guardado"));
-  const borrar = useMutation(opts(borrarCliente as never, "Cliente eliminado"));
+  const estado = useMutation(opts(cambiarEstadoCliente as never, "Cliente actualizado"));
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
 
@@ -172,8 +169,9 @@ function Clientes() {
           items={(clientes.data ?? []).map((c) => ({
             id: c.id,
             titulo: `${c.codigo} — ${c.nombre}`,
+            activo: c.activo,
           }))}
-          onBorrar={(id) => borrar.mutate(id as never)}
+          onCambiarEstado={(id, activo) => estado.mutate({ id, activo } as never)}
         />
       </CardContent>
     </Card>
@@ -185,7 +183,7 @@ function Proyectos() {
   const proyectos = useDatos(proyectosQuery);
   const opts = useCrud("proyectos");
   const crear = useMutation(opts(crearProyecto as never, "Proyecto guardado"));
-  const borrar = useMutation(opts(borrarProyecto as never, "Proyecto eliminado"));
+  const estado = useMutation(opts(cambiarEstadoProyecto as never, "Proyecto actualizado"));
   const [clienteId, setClienteId] = useState("");
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
@@ -262,9 +260,10 @@ function Proyectos() {
               id: p.id,
               titulo: `${p.codigo} — ${p.nombre}`,
               detalle: cli ? `${cli.codigo} · ${cli.nombre}` : undefined,
+              activo: p.activo,
             };
           })}
-          onBorrar={(id) => borrar.mutate(id as never)}
+          onCambiarEstado={(id, activo) => estado.mutate({ id, activo } as never)}
         />
       </CardContent>
     </Card>
@@ -277,7 +276,7 @@ function Operarios() {
   const opts = useCrud("operarios");
   const optsRoles = useCrud("operario_roles");
   const crear = useMutation(opts(crearOperario as never, "Operario guardado"));
-  const borrar = useMutation(opts(borrarOperario as never, "Operario eliminado"));
+  const estado = useMutation(opts(cambiarEstadoOperario as never, "Operario actualizado"));
   const guardarJornada = useMutation(opts(actualizarOperario as never, "Jornada actualizada"));
   const dar = useMutation(optsRoles(asignarRol as never, "Permiso concedido"));
   const quitar = useMutation(optsRoles(quitarRol as never, "Permiso retirado"));
@@ -423,7 +422,14 @@ function Operarios() {
             <li key={o.id} className="rounded-md border border-border bg-background px-3 py-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">{o.nombre}</p>
+                  <p className="text-sm font-medium">
+                    {o.nombre}
+                    {o.activo ? null : (
+                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                        De baja
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {o.area} · entrada {(o.hora_entrada ?? "07:00").slice(0, 5)} ·{" "}
                     {formatoHoras(o.jornada_minutos ?? 480)}/día · desayuno{" "}
@@ -445,12 +451,12 @@ function Operarios() {
                     Cambiar PIN
                   </Button>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Eliminar"
-                    onClick={() => borrar.mutate(o.id as never)}
+                    variant={o.activo ? "outline" : "default"}
+                    size="sm"
+                    disabled={estado.isPending}
+                    onClick={() => estado.mutate({ id: o.id, activo: !o.activo } as never)}
                   >
-                    <Trash2 className="size-4" />
+                    {o.activo ? "Dar de baja" : "Reactivar"}
                   </Button>
                 </div>
               </div>
@@ -548,10 +554,10 @@ function Operarios() {
 
 function Lista({
   items,
-  onBorrar,
+  onCambiarEstado,
 }: {
-  items: { id: string; titulo: string; detalle?: string }[];
-  onBorrar: (id: string) => void;
+  items: { id: string; titulo: string; detalle?: string; activo: boolean }[];
+  onCambiarEstado: (id: string, activo: boolean) => void;
 }) {
   if (items.length === 0) {
     return (
@@ -568,11 +574,22 @@ function Lista({
           className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2"
         >
           <div>
-            <p className="text-sm font-medium">{i.titulo}</p>
+            <p className="text-sm font-medium">
+              {i.titulo}
+              {i.activo ? null : (
+                <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  Deshabilitado
+                </span>
+              )}
+            </p>
             {i.detalle ? <p className="text-xs text-muted-foreground">{i.detalle}</p> : null}
           </div>
-          <Button variant="ghost" size="icon" aria-label="Eliminar" onClick={() => onBorrar(i.id)}>
-            <Trash2 className="size-4" />
+          <Button
+            variant={i.activo ? "outline" : "default"}
+            size="sm"
+            onClick={() => onCambiarEstado(i.id, !i.activo)}
+          >
+            {i.activo ? "Deshabilitar" : "Reactivar"}
           </Button>
         </li>
       ))}

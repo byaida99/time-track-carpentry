@@ -2,17 +2,17 @@ import {
   fnActualizarOperario,
   fnActualizarParte,
   fnAsignarRol,
-  fnBorrarCliente,
   fnBorrarDia,
-  fnBorrarOperario,
   fnBorrarParte,
-  fnBorrarProyecto,
   fnCrearCliente,
   fnCrearDias,
   fnCrearOperario,
   fnCrearParte,
   fnCrearProyecto,
   fnEstablecerPin,
+  fnEstadoCliente,
+  fnEstadoOperario,
+  fnEstadoProyecto,
   fnListarCalendario,
   fnListarClientes,
   fnListarOperarios,
@@ -45,6 +45,7 @@ export type Cliente = {
   id: string;
   codigo: string;
   nombre: string;
+  activo: boolean;
 };
 
 export type Proyecto = {
@@ -195,16 +196,16 @@ export async function actualizarOperario(input: {
   await fnActualizarOperario({ data: { ...input, token: token() } });
 }
 
-export async function borrarOperario(id: string) {
-  await fnBorrarOperario({ data: { id, token: token() } });
+export async function cambiarEstadoOperario(input: { id: string; activo: boolean }) {
+  await fnEstadoOperario({ data: { ...input, token: token() } });
 }
 
 export async function crearCliente(input: { codigo: string; nombre: string }) {
   await fnCrearCliente({ data: { ...input, token: token() } });
 }
 
-export async function borrarCliente(id: string) {
-  await fnBorrarCliente({ data: { id, token: token() } });
+export async function cambiarEstadoCliente(input: { id: string; activo: boolean }) {
+  await fnEstadoCliente({ data: { ...input, token: token() } });
 }
 
 export async function crearProyecto(input: {
@@ -215,8 +216,8 @@ export async function crearProyecto(input: {
   await fnCrearProyecto({ data: { ...input, token: token() } });
 }
 
-export async function borrarProyecto(id: string) {
-  await fnBorrarProyecto({ data: { id, token: token() } });
+export async function cambiarEstadoProyecto(input: { id: string; activo: boolean }) {
+  await fnEstadoProyecto({ data: { ...input, token: token() } });
 }
 
 export function formatoHoras(minutos: number) {
