@@ -20,7 +20,9 @@ export function AppShell({
   const nav = [
     { to: "/", label: "Fichar", ver: true },
     { to: "/calendario", label: "Calendario", ver: Boolean(sesion) },
+    { to: "/pedidos", label: "Pedidos", ver: Boolean(sesion) },
     { to: "/perfil", label: "Mi perfil", ver: Boolean(sesion) },
+
     { to: "/informes", label: "Informes", ver: puedeVerInformes },
     { to: "/datos", label: "Clientes y proyectos", ver: puedeGestionarDatos },
   ].filter((item) => item.ver);
