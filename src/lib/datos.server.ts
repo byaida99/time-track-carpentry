@@ -140,9 +140,14 @@ export async function actualizarOperario(
   if (error) throw new Error(error.message);
 }
 
-export async function borrarOperario(token: string | null, id: string) {
+// Los operarios no se eliminan (sus partes deben conservarse): se dan de baja.
+export async function cambiarEstadoOperario(
+  token: string | null,
+  id: string,
+  activo: boolean,
+) {
   requiereAdmin(await requiereActor(token));
-  const { error } = await supabaseAdmin.from("operarios").delete().eq("id", id);
+  const { error } = await supabaseAdmin.from("operarios").update({ activo }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
@@ -151,7 +156,7 @@ export async function borrarOperario(token: string | null, id: string) {
 export async function listarClientes(token: string | null) {
   await requiereActor(token);
   return comprobar(
-    await supabaseAdmin.from("clientes").select("id, codigo, nombre").order("codigo"),
+    await supabaseAdmin.from("clientes").select("id, codigo, nombre, activo").order("codigo"),
   );
 }
 
@@ -164,10 +169,22 @@ export async function crearCliente(
   if (error) throw new Error(error.message);
 }
 
-export async function borrarCliente(token: string | null, id: string) {
+export async function cambiarEstadoCliente(
+  token: string | null,
+  id: string,
+  activo: boolean,
+) {
   requiereGestionDatos(await requiereActor(token));
-  const { error } = await supabaseAdmin.from("clientes").delete().eq("id", id);
+  const { error } = await supabaseAdmin.from("clientes").update({ activo }).eq("id", id);
   if (error) throw new Error(error.message);
+  // Al deshabilitar un cliente se deshabilitan también sus proyectos.
+  if (!activo) {
+    const res = await supabaseAdmin
+      .from("proyectos")
+      .update({ activo: false })
+      .eq("cliente_id", id);
+    if (res.error) throw new Error(res.error.message);
+  }
 }
 
 export async function listarProyectos(token: string | null) {
@@ -189,9 +206,13 @@ export async function crearProyecto(
   if (error) throw new Error(error.message);
 }
 
-export async function borrarProyecto(token: string | null, id: string) {
+export async function cambiarEstadoProyecto(
+  token: string | null,
+  id: string,
+  activo: boolean,
+) {
   requiereGestionDatos(await requiereActor(token));
-  const { error } = await supabaseAdmin.from("proyectos").delete().eq("id", id);
+  const { error } = await supabaseAdmin.from("proyectos").update({ activo }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 

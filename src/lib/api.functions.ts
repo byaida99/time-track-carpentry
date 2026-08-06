@@ -46,11 +46,11 @@ export const fnActualizarOperario = createServerFn({ method: "POST" })
     return actualizarOperario(token, input);
   });
 
-export const fnBorrarOperario = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => S.tokenId.parse(d))
+export const fnEstadoOperario = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.estadoSchema.parse(d))
   .handler(async ({ data }) => {
-    const { borrarOperario } = await import("@/lib/datos.server");
-    return borrarOperario(data.token, data.id);
+    const { cambiarEstadoOperario } = await import("@/lib/datos.server");
+    return cambiarEstadoOperario(data.token, data.id, data.activo);
   });
 
 export const fnListarClientes = createServerFn({ method: "POST" })
@@ -68,11 +68,11 @@ export const fnCrearCliente = createServerFn({ method: "POST" })
     return crearCliente(token, input);
   });
 
-export const fnBorrarCliente = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => S.tokenId.parse(d))
+export const fnEstadoCliente = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.estadoSchema.parse(d))
   .handler(async ({ data }) => {
-    const { borrarCliente } = await import("@/lib/datos.server");
-    return borrarCliente(data.token, data.id);
+    const { cambiarEstadoCliente } = await import("@/lib/datos.server");
+    return cambiarEstadoCliente(data.token, data.id, data.activo);
   });
 
 export const fnListarProyectos = createServerFn({ method: "POST" })
@@ -90,11 +90,11 @@ export const fnCrearProyecto = createServerFn({ method: "POST" })
     return crearProyecto(token, input);
   });
 
-export const fnBorrarProyecto = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => S.tokenId.parse(d))
+export const fnEstadoProyecto = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.estadoSchema.parse(d))
   .handler(async ({ data }) => {
-    const { borrarProyecto } = await import("@/lib/datos.server");
-    return borrarProyecto(data.token, data.id);
+    const { cambiarEstadoProyecto } = await import("@/lib/datos.server");
+    return cambiarEstadoProyecto(data.token, data.id, data.activo);
   });
 
 export const fnListarPartes = createServerFn({ method: "POST" })
