@@ -1,5 +1,6 @@
 import {
   fnActualizarOperario,
+  fnActualizarProducto,
   fnActualizarParte,
   fnAsignarRol,
   fnBorrarDia,
@@ -8,6 +9,7 @@ import {
   fnCrearDias,
   fnCrearOperario,
   fnCrearParte,
+  fnCrearPedido,
   fnCrearProyecto,
   fnEstablecerPin,
   fnEstadoCliente,
@@ -17,9 +19,12 @@ import {
   fnListarClientes,
   fnListarOperarios,
   fnListarPartes,
+  fnListarPedidos,
+  fnListarProductos,
   fnListarProyectos,
   fnListarRoles,
   fnLogin,
+  fnMarcarPedido,
   fnQuitarRol,
   fnTienePin,
 } from "@/lib/api.functions";
@@ -315,4 +320,91 @@ export async function crearDias(input: {
 
 export async function borrarDia(id: string) {
   await fnBorrarDia({ data: { id, token: token() } });
+}
+
+/* ---------------- Productos y pedidos ---------------- */
+
+export type Producto = {
+  id: string;
+  nombre: string;
+  referencia: string;
+  proveedor: string;
+  unidad: string;
+  precio_estimado: number | null;
+  descripcion: string;
+  ficha_completa: boolean;
+  activo: boolean;
+  created_at: string;
+  foto: string | null;
+};
+
+export type Pedido = {
+  id: string;
+  producto_id: string;
+  operario_id: string;
+  cantidad: number;
+  notas: string;
+  estado: string;
+  pedido_at: string | null;
+  created_at: string;
+  foto: string | null;
+  producto: {
+    nombre: string;
+    referencia: string;
+    proveedor: string;
+    unidad: string;
+    ficha_completa: boolean;
+  } | null;
+  operario: { nombre: string; area: string } | null;
+};
+
+export const productosQuery = {
+  queryKey: ["productos"],
+  queryFn: async () =>
+    (await fnListarProductos({ data: { token: token() } })) as unknown as Producto[],
+};
+
+export const pedidosQuery = {
+  queryKey: ["pedidos"],
+  queryFn: async () =>
+    (await fnListarPedidos({ data: { token: token() } })) as unknown as Pedido[],
+};
+
+export async function crearPedido(input: {
+  producto_id: string | null;
+  producto_nuevo: string;
+  cantidad: number;
+  notas: string;
+  foto: string | null;
+}) {
+  await fnCrearPedido({ data: { ...input, token: token() } });
+}
+
+export async function marcarPedido(input: { id: string; pedido: boolean }) {
+  await fnMarcarPedido({ data: { ...input, token: token() } });
+}
+
+export async function actualizarProducto(input: {
+  id: string;
+  nombre: string;
+  referencia: string;
+  proveedor: string;
+  unidad: string;
+  precio_estimado: number | null;
+  descripcion: string;
+  ficha_completa: boolean;
+  activo: boolean;
+  foto: string | null;
+}) {
+  await fnActualizarProducto({ data: { ...input, token: token() } });
+}
+
+export async function leerFotoComoBase64(file: File) {
+  if (file.size > 4_000_000) throw new Error("La foto es demasiado grande (máx. 4 MB)");
+  return new Promise<string>((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(String(lector.result));
+    lector.onerror = () => reject(new Error("No se ha podido leer la foto"));
+    lector.readAsDataURL(file);
+  });
 }
