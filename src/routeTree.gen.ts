@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as DatosRouteImport } from './routes/datos'
 import { Route as InformesRouteImport } from './routes/informes'
+import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as PerfilRouteImport } from './routes/perfil'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const InformesRoute = InformesRouteImport.update({
   path: '/informes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PedidosRoute = PedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/calendario': typeof CalendarioRoute
   '/datos': typeof DatosRoute
   '/informes': typeof InformesRoute
+  '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/calendario': typeof CalendarioRoute
   '/datos': typeof DatosRoute
   '/informes': typeof InformesRoute
+  '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,23 @@ export interface FileRoutesById {
   '/calendario': typeof CalendarioRoute
   '/datos': typeof DatosRoute
   '/informes': typeof InformesRoute
+  '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendario' | '/datos' | '/informes' | '/perfil'
+  fullPaths:
+    '/' | '/calendario' | '/datos' | '/informes' | '/pedidos' | '/perfil'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendario' | '/datos' | '/informes' | '/perfil'
-  id: '__root__' | '/' | '/calendario' | '/datos' | '/informes' | '/perfil'
+  to: '/' | '/calendario' | '/datos' | '/informes' | '/pedidos' | '/perfil'
+  id:
+    | '__root__'
+    | '/'
+    | '/calendario'
+    | '/datos'
+    | '/informes'
+    | '/pedidos'
+    | '/perfil'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +93,7 @@ export interface RootRouteChildren {
   CalendarioRoute: typeof CalendarioRoute
   DatosRoute: typeof DatosRoute
   InformesRoute: typeof InformesRoute
+  PedidosRoute: typeof PedidosRoute
   PerfilRoute: typeof PerfilRoute
 }
 
@@ -109,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InformesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pedidos': {
+      id: '/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof PedidosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/perfil': {
       id: '/perfil'
       path: '/perfil'
@@ -124,6 +149,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarioRoute: CalendarioRoute,
   DatosRoute: DatosRoute,
   InformesRoute: InformesRoute,
+  PedidosRoute: PedidosRoute,
   PerfilRoute: PerfilRoute,
 }
 export const routeTree = rootRouteImport

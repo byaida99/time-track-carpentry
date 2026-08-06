@@ -376,3 +376,149 @@ export async function borrarDia(token: string | null, id: string) {
   const { error } = await supabaseAdmin.from("calendario").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+/* ---------------- Productos y pedidos ---------------- */
+
+const BUCKET = "productos";
+
+async function subirFoto(base64: string, carpeta: string) {
+  const coincide = /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(base64);
+  if (!coincide) throw new Error("La foto no es válida");
+  const tipo = coincide[1]!;
+  const binario = Uint8Array.from(atob(coincide[2]!), (c) => c.charCodeAt(0));
+  const ext = tipo.split("/")[1]!.replace("jpeg", "jpg");
+  const ruta = `${carpeta}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .upload(ruta, binario, { contentType: tipo, upsert: false });
+  if (error) throw new Error("No se ha podido guardar la foto");
+  return ruta;
+}
+
+async function urlFoto(ruta: string | null) {
+  if (!ruta) return null;
+  const { data } = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(ruta, 3600);
+  return data?.signedUrl ?? null;
+}
+
+export async function listarProductos(token: string | null) {
+  await requiereActor(token);
+  const filas = comprobar(
+    await supabaseAdmin
+      .from("productos")
+      .select(
+        "id, nombre, referencia, proveedor, unidad, precio_estimado, descripcion, ficha_completa, foto_url, activo, created_at",
+      )
+      .order("nombre"),
+  );
+  return Promise.all(
+    filas.map(async (p) => ({ ...p, foto: await urlFoto(p.foto_url) })),
+  );
+}
+
+export async function crearProducto(
+  token: string | null,
+  input: { nombre: string; foto: string | null },
+) {
+  const actor = await requiereActor(token);
+  const ruta = input.foto ? await subirFoto(input.foto, "productos") : null;
+  const { data, error } = await supabaseAdmin
+    .from("productos")
+    .insert({ nombre: input.nombre, foto_url: ruta, creado_por: actor.id })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id as string;
+}
+
+export async function actualizarProducto(
+  token: string | null,
+  input: {
+    id: string;
+    nombre: string;
+    referencia: string;
+    proveedor: string;
+    unidad: string;
+    precio_estimado: number | null;
+    descripcion: string;
+    ficha_completa: boolean;
+    activo: boolean;
+    foto: string | null;
+  },
+) {
+  requiereGestionDatos(await requiereActor(token));
+  const { id, foto, ...cambios } = input;
+  const ruta = foto ? await subirFoto(foto, "productos") : null;
+  const { error } = await supabaseAdmin
+    .from("productos")
+    .update({ ...cambios, ...(ruta ? { foto_url: ruta } : {}) })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function listarPedidos(token: string | null) {
+  const actor = await requiereActor(token);
+  let consulta = supabaseAdmin
+    .from("pedidos")
+    .select(
+      "id, producto_id, operario_id, cantidad, notas, foto_url, estado, pedido_at, created_at, producto:productos(nombre, referencia, proveedor, unidad, ficha_completa), operario:operarios(nombre, area)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(300);
+
+  // Un operario solo ve sus propias peticiones.
+  if (!actor.puedeGestionarDatos) consulta = consulta.eq("operario_id", actor.id);
+
+  const filas = comprobar(await consulta);
+  return Promise.all(filas.map(async (p) => ({ ...p, foto: await urlFoto(p.foto_url) })));
+}
+
+export async function crearPedido(
+  token: string | null,
+  input: {
+    producto_id: string | null;
+    producto_nuevo: string;
+    cantidad: number;
+    notas: string;
+    foto: string | null;
+  },
+) {
+  const actor = await requiereActor(token);
+  const ruta = input.foto ? await subirFoto(input.foto, "pedidos") : null;
+
+  let productoId = input.producto_id;
+  if (!productoId) {
+    const nombre = input.producto_nuevo.trim();
+    if (!nombre) throw new Error("Indica el producto que necesitas");
+    const { data, error } = await supabaseAdmin
+      .from("productos")
+      .insert({ nombre, foto_url: ruta, creado_por: actor.id })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    productoId = data.id;
+  }
+
+  const { error } = await supabaseAdmin.from("pedidos").insert({
+    producto_id: productoId,
+    operario_id: actor.id,
+    cantidad: input.cantidad,
+    notas: input.notas,
+    foto_url: ruta,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function marcarPedido(token: string | null, id: string, pedido: boolean) {
+  const actor = await requiereActor(token);
+  requiereGestionDatos(actor);
+  const { error } = await supabaseAdmin
+    .from("pedidos")
+    .update({
+      estado: pedido ? "pedido" : "pendiente",
+      pedido_at: pedido ? new Date().toISOString() : null,
+      pedido_por: pedido ? actor.id : null,
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}

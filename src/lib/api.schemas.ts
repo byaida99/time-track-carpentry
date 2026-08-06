@@ -84,3 +84,44 @@ export const crearDiasSchema = z.object({
   operario_id: uuid.nullable(),
   descripcion: texto(200),
 });
+
+/* ---------------- Pedidos y productos ---------------- */
+
+const foto = z
+  .string()
+  .regex(/^data:image\/(png|jpe?g|webp|gif);base64,/, "La foto no es válida")
+  .max(6_000_000, "La foto es demasiado grande")
+  .nullable()
+  .optional()
+  .transform((v) => v ?? null);
+
+export const crearProductoSchema = z.object({
+  token,
+  nombre: texto(120).min(1, "El nombre es obligatorio"),
+  foto,
+});
+
+export const actualizarProductoSchema = z.object({
+  token,
+  id: uuid,
+  nombre: texto(120).min(1, "El nombre es obligatorio"),
+  referencia: texto(60),
+  proveedor: texto(120),
+  unidad: texto(20).min(1),
+  precio_estimado: z.number().min(0).max(1_000_000).nullable(),
+  descripcion: texto(1000),
+  ficha_completa: z.boolean(),
+  activo: z.boolean(),
+  foto,
+});
+
+export const crearPedidoSchema = z.object({
+  token,
+  producto_id: uuid.nullable(),
+  producto_nuevo: texto(120),
+  cantidad: z.number().min(0.01).max(100000),
+  notas: texto(500),
+  foto,
+});
+
+export const marcarPedidoSchema = z.object({ token, id: uuid, pedido: z.boolean() });
