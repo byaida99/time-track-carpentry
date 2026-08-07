@@ -339,6 +339,22 @@ export type Producto = {
   foto: string | null;
 };
 
+export type EstadoPedido = "pendiente" | "confirmado" | "entregado" | "cancelado";
+
+export const ESTADOS_PEDIDO: EstadoPedido[] = [
+  "pendiente",
+  "confirmado",
+  "entregado",
+  "cancelado",
+];
+
+export const ETIQUETA_ESTADO_PEDIDO: Record<EstadoPedido, string> = {
+  pendiente: "Pendiente",
+  confirmado: "Pedido confirmado",
+  entregado: "Entregado",
+  cancelado: "Cancelado",
+};
+
 export type Pedido = {
   id: string;
   producto_id: string;
@@ -346,6 +362,7 @@ export type Pedido = {
   cantidad: number;
   notas: string;
   estado: string;
+  estado_at: string | null;
   pedido_at: string | null;
   created_at: string;
   foto: string | null;
@@ -357,6 +374,15 @@ export type Pedido = {
     ficha_completa: boolean;
   } | null;
   operario: { nombre: string; area: string } | null;
+};
+
+export type HistorialPedido = {
+  id: string;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  nota: string;
+  created_at: string;
+  operario: { nombre: string } | null;
 };
 
 export const productosQuery = {
@@ -371,6 +397,16 @@ export const pedidosQuery = {
     (await fnListarPedidos({ data: { token: token() } })) as unknown as Pedido[],
 };
 
+export function historialPedidoQuery(pedidoId: string) {
+  return {
+    queryKey: ["pedido_historial", pedidoId],
+    queryFn: async () =>
+      (await fnHistorialPedido({
+        data: { pedido_id: pedidoId, token: token() },
+      })) as unknown as HistorialPedido[],
+  };
+}
+
 export async function crearPedido(input: {
   producto_id: string | null;
   producto_nuevo: string;
@@ -381,8 +417,12 @@ export async function crearPedido(input: {
   await fnCrearPedido({ data: { ...input, token: token() } });
 }
 
-export async function marcarPedido(input: { id: string; pedido: boolean }) {
-  await fnMarcarPedido({ data: { ...input, token: token() } });
+export async function cambiarEstadoPedido(input: {
+  id: string;
+  estado: EstadoPedido;
+  nota: string;
+}) {
+  await fnEstadoPedido({ data: { ...input, token: token() } });
 }
 
 export async function actualizarProducto(input: {
