@@ -20,12 +20,16 @@ import {
 } from "@/components/ui/select";
 import {
   actualizarProducto,
+  cambiarEstadoPedido,
   crearPedido,
+  ESTADOS_PEDIDO,
+  ETIQUETA_ESTADO_PEDIDO,
+  historialPedidoQuery,
   leerFotoComoBase64,
-  marcarPedido,
   pedidosQuery,
   productosQuery,
   useDatos,
+  type EstadoPedido,
   type Pedido,
   type Producto,
 } from "@/lib/api";
