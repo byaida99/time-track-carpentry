@@ -87,6 +87,8 @@ function Pedidos() {
   const [notas, setNotas] = useState("");
   const [foto, setFoto] = useState<string | null>(null);
   const [ficha, setFicha] = useState<Producto | null>(null);
+  const [historial, setHistorial] = useState<Pedido | null>(null);
+  const listaRef = useRef<HTMLDivElement>(null);
 
   const disponibles = useMemo(
     () => (productos.data ?? []).filter((p) => p.activo),
