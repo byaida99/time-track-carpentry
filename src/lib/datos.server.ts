@@ -461,7 +461,7 @@ export async function listarPedidos(token: string | null) {
   let consulta = supabaseAdmin
     .from("pedidos")
     .select(
-      "id, producto_id, operario_id, cantidad, notas, foto_url, estado, pedido_at, created_at, producto:productos(nombre, referencia, proveedor, unidad, ficha_completa), operario:operarios(nombre, area)",
+      "id, producto_id, operario_id, cantidad, notas, foto_url, estado, estado_at, pedido_at, created_at, producto:productos(nombre, referencia, proveedor, unidad, ficha_completa), operario:operarios(nombre, area)",
     )
     .order("created_at", { ascending: false })
     .limit(300);
@@ -471,6 +471,16 @@ export async function listarPedidos(token: string | null) {
 
   const filas = comprobar(await consulta);
   return Promise.all(filas.map(async (p) => ({ ...p, foto: await urlFoto(p.foto_url) })));
+}
+
+async function registrarHistorial(input: {
+  pedido_id: string;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  nota: string;
+  operario_id: string;
+}) {
+  await supabaseAdmin.from("pedido_historial").insert(input);
 }
 
 export async function crearPedido(
@@ -499,26 +509,87 @@ export async function crearPedido(
     productoId = data.id;
   }
 
-  const { error } = await supabaseAdmin.from("pedidos").insert({
-    producto_id: productoId,
-    operario_id: actor.id,
-    cantidad: input.cantidad,
-    notas: input.notas,
-    foto_url: ruta,
-  });
+  const { data, error } = await supabaseAdmin
+    .from("pedidos")
+    .insert({
+      producto_id: productoId,
+      operario_id: actor.id,
+      cantidad: input.cantidad,
+      notas: input.notas,
+      foto_url: ruta,
+      estado: "pendiente",
+      estado_at: new Date().toISOString(),
+      estado_por: actor.id,
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+
+  await registrarHistorial({
+    pedido_id: data.id as string,
+    estado_anterior: null,
+    estado_nuevo: "pendiente",
+    nota: input.notas,
+    operario_id: actor.id,
+  });
+
+  return data.id as string;
 }
 
-export async function marcarPedido(token: string | null, id: string, pedido: boolean) {
+export async function cambiarEstadoPedido(
+  token: string | null,
+  id: string,
+  estado: "pendiente" | "confirmado" | "entregado" | "cancelado",
+  nota: string,
+) {
   const actor = await requiereActor(token);
   requiereGestionDatos(actor);
+
+  const { data: previo, error: errorPrevio } = await supabaseAdmin
+    .from("pedidos")
+    .select("estado")
+    .eq("id", id)
+    .single();
+  if (errorPrevio) throw new Error(errorPrevio.message);
+
+  const ahora = new Date().toISOString();
   const { error } = await supabaseAdmin
     .from("pedidos")
     .update({
-      estado: pedido ? "pedido" : "pendiente",
-      pedido_at: pedido ? new Date().toISOString() : null,
-      pedido_por: pedido ? actor.id : null,
+      estado,
+      estado_at: ahora,
+      estado_por: actor.id,
+      pedido_at: estado === "pendiente" ? null : ahora,
+      pedido_por: estado === "pendiente" ? null : actor.id,
     })
     .eq("id", id);
   if (error) throw new Error(error.message);
+
+  await registrarHistorial({
+    pedido_id: id,
+    estado_anterior: (previo?.estado as string | null) ?? null,
+    estado_nuevo: estado,
+    nota,
+    operario_id: actor.id,
+  });
+}
+
+export async function listarHistorialPedido(token: string | null, pedidoId: string) {
+  const actor = await requiereActor(token);
+  const propietario = comprobar(
+    await supabaseAdmin.from("pedidos").select("operario_id").eq("id", pedidoId),
+  )[0];
+  if (!propietario) throw new Error("El pedido no existe");
+  if (!actor.puedeGestionarDatos && propietario.operario_id !== actor.id) {
+    throw new Error("No tienes permiso para ver este historial");
+  }
+  return comprobar(
+    await supabaseAdmin
+      .from("pedido_historial")
+      .select(
+        "id, estado_anterior, estado_nuevo, nota, created_at, operario:operarios(nombre)",
+      )
+      .eq("pedido_id", pedidoId)
+      .order("created_at", { ascending: true }),
+  );
 }
