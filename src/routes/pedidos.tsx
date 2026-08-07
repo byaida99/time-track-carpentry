@@ -290,24 +290,37 @@ function Pedidos() {
           }}
         />
       ) : null}
+
+      {historial ? (
+        <Historial pedido={historial} onCerrar={() => setHistorial(null)} />
+      ) : null}
     </AppShell>
   );
 }
+
+const COLOR_ESTADO: Record<EstadoPedido, string> = {
+  pendiente: "bg-secondary text-secondary-foreground",
+  confirmado: "bg-primary/15 text-primary",
+  entregado: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  cancelado: "bg-destructive/15 text-destructive",
+};
 
 function Lista({
   titulo,
   filas,
   puedeGestionar,
-  onMarcar,
+  onCambiar,
   productos,
   onFicha,
+  onHistorial,
 }: {
   titulo: string;
   filas: Pedido[];
   puedeGestionar: boolean;
-  onMarcar: (id: string, pedido: boolean) => void;
+  onCambiar: (id: string, estado: EstadoPedido) => void;
   productos: Producto[];
   onFicha: (p: Producto) => void;
+  onHistorial: (p: Pedido) => void;
 }) {
   return (
     <section>
@@ -347,21 +360,43 @@ function Lista({
                   {p.operario?.nombre ?? ""}
                   {p.notas ? ` · ${p.notas}` : ""}
                 </p>
-                {producto && !producto.ficha_completa ? (
-                  <p className="mt-1 text-xs text-primary">Ficha sin completar</p>
-                ) : null}
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`label-caps rounded-full px-2 py-0.5 text-[11px] ${
+                      COLOR_ESTADO[p.estado as EstadoPedido] ?? "bg-secondary"
+                    }`}
+                  >
+                    {ETIQUETA_ESTADO_PEDIDO[p.estado as EstadoPedido] ?? p.estado}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onHistorial(p)}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    <History className="size-3" /> Historial
+                  </button>
+                  {producto && !producto.ficha_completa ? (
+                    <span className="text-xs text-primary">Ficha sin completar</span>
+                  ) : null}
+                </div>
               </div>
               {puedeGestionar ? (
-                <div className="flex flex-col gap-1">
-                  {p.estado === "pendiente" ? (
-                    <Button size="sm" onClick={() => onMarcar(p.id, true)}>
-                      <Check className="mr-1 size-4" /> Pedido
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="secondary" onClick={() => onMarcar(p.id, false)}>
-                      <RotateCcw className="mr-1 size-4" /> Reabrir
-                    </Button>
-                  )}
+                <div className="flex w-32 shrink-0 flex-col gap-1">
+                  <Select
+                    value={p.estado}
+                    onValueChange={(v) => onCambiar(p.id, v as EstadoPedido)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADOS_PEDIDO.map((e) => (
+                        <SelectItem key={e} value={e}>
+                          {ETIQUETA_ESTADO_PEDIDO[e]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {producto ? (
                     <Button size="sm" variant="ghost" onClick={() => onFicha(producto)}>
                       Ficha
@@ -374,6 +409,55 @@ function Lista({
         })}
       </div>
     </section>
+  );
+}
+
+function Historial({ pedido, onCerrar }: { pedido: Pedido; onCerrar: () => void }) {
+  const historial = useDatos(historialPedidoQuery(pedido.id));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight">Historial del pedido</h2>
+              <p className="text-sm text-muted-foreground">
+                {pedido.cantidad} {pedido.producto?.unidad ?? "ud"} ·{" "}
+                {pedido.producto?.nombre}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onCerrar}>
+              <X className="size-4" />
+            </Button>
+          </div>
+
+          {historial.isLoading ? (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          ) : (historial.data ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin cambios registrados.</p>
+          ) : (
+            <ol className="grid gap-3">
+              {(historial.data ?? []).map((h) => (
+                <li key={h.id} className="border-l-2 border-border pl-3">
+                  <p className="text-sm font-semibold">
+                    {h.estado_anterior
+                      ? `${ETIQUETA_ESTADO_PEDIDO[h.estado_anterior as EstadoPedido] ?? h.estado_anterior} → `
+                      : "Creado · "}
+                    {ETIQUETA_ESTADO_PEDIDO[h.estado_nuevo as EstadoPedido] ?? h.estado_nuevo}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(h.created_at).toLocaleString("es-ES")}
+                    {h.operario?.nombre ? ` · ${h.operario.nombre}` : ""}
+                  </p>
+                  {h.nota ? <p className="mt-0.5 text-xs">{h.nota}</p> : null}
+                </li>
+              ))}
+            </ol>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
