@@ -208,11 +208,58 @@ export type Database = {
           },
         ]
       }
+      pedido_historial: {
+        Row: {
+          created_at: string
+          estado_anterior: string | null
+          estado_nuevo: string
+          id: string
+          nota: string
+          operario_id: string | null
+          pedido_id: string
+        }
+        Insert: {
+          created_at?: string
+          estado_anterior?: string | null
+          estado_nuevo: string
+          id?: string
+          nota?: string
+          operario_id?: string | null
+          pedido_id: string
+        }
+        Update: {
+          created_at?: string
+          estado_anterior?: string | null
+          estado_nuevo?: string
+          id?: string
+          nota?: string
+          operario_id?: string | null
+          pedido_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_historial_operario_id_fkey"
+            columns: ["operario_id"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_historial_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           cantidad: number
           created_at: string
           estado: string
+          estado_at: string | null
+          estado_por: string | null
           foto_url: string | null
           id: string
           notas: string
@@ -226,6 +273,8 @@ export type Database = {
           cantidad?: number
           created_at?: string
           estado?: string
+          estado_at?: string | null
+          estado_por?: string | null
           foto_url?: string | null
           id?: string
           notas?: string
@@ -239,6 +288,8 @@ export type Database = {
           cantidad?: number
           created_at?: string
           estado?: string
+          estado_at?: string | null
+          estado_por?: string | null
           foto_url?: string | null
           id?: string
           notas?: string
@@ -249,6 +300,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "pedidos_estado_por_fkey"
+            columns: ["estado_por"]
+            isOneToOne: false
+            referencedRelation: "operarios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pedidos_operario_id_fkey"
             columns: ["operario_id"]
