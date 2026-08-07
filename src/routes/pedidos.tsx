@@ -95,22 +95,29 @@ function Pedidos() {
 
   const enviar = useMutation({
     mutationFn: crearPedido,
-    onSuccess: () => {
-      toast.success("Pedido registrado");
+    onSuccess: async () => {
+      toast.success("Pedido añadido a la lista");
       setProductoId(NUEVO);
       setNuevo("");
       setCantidad("1");
       setNotas("");
       setFoto(null);
-      cliente.invalidateQueries({ queryKey: ["pedidos"] });
-      cliente.invalidateQueries({ queryKey: ["productos"] });
+      await Promise.all([
+        cliente.invalidateQueries({ queryKey: ["pedidos"] }),
+        cliente.invalidateQueries({ queryKey: ["productos"] }),
+      ]);
+      listaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const marcar = useMutation({
-    mutationFn: marcarPedido,
-    onSuccess: () => cliente.invalidateQueries({ queryKey: ["pedidos"] }),
+  const cambiar = useMutation({
+    mutationFn: cambiarEstadoPedido,
+    onSuccess: (_d, v) => {
+      toast.success(`Estado: ${ETIQUETA_ESTADO_PEDIDO[v.estado]}`);
+      cliente.invalidateQueries({ queryKey: ["pedidos"] });
+      cliente.invalidateQueries({ queryKey: ["pedido_historial"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
