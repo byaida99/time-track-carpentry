@@ -152,8 +152,8 @@ function Pedidos() {
     });
   }
 
-  const pendientes = (pedidos.data ?? []).filter((p) => p.estado === "pendiente");
-  const hechos = (pedidos.data ?? []).filter((p) => p.estado !== "pendiente");
+  const porEstado = (estado: EstadoPedido) =>
+    (pedidos.data ?? []).filter((p) => p.estado === estado);
 
   return (
     <AppShell
