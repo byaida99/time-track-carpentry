@@ -373,7 +373,7 @@ function Lista({
                     onClick={() => onHistorial(p)}
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:underline"
                   >
-                    <History className="size-3" /> Historial
+                    <Reloj className="size-3" /> Historial
                   </button>
                   {producto && !producto.ficha_completa ? (
                     <span className="text-xs text-primary">Ficha sin completar</span>
