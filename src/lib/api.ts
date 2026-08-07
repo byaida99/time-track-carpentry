@@ -24,7 +24,8 @@ import {
   fnListarProyectos,
   fnListarRoles,
   fnLogin,
-  fnMarcarPedido,
+  fnEstadoPedido,
+  fnHistorialPedido,
   fnQuitarRol,
   fnTienePin,
 } from "@/lib/api.functions";
