@@ -256,25 +256,24 @@ function Pedidos() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6">
-          <Lista
-            titulo="Pendientes de pedir"
-            filas={pendientes}
-            puedeGestionar={puedeGestionarDatos}
-            onMarcar={(id, pedido) => marcar.mutate({ id, pedido })}
-            productos={productos.data ?? []}
-            onFicha={setFicha}
-          />
-          <Lista
-            titulo="Ya pedidos"
-            filas={hechos}
-            puedeGestionar={puedeGestionarDatos}
-            onMarcar={(id, pedido) => marcar.mutate({ id, pedido })}
-            productos={productos.data ?? []}
-            onFicha={setFicha}
-          />
+        <div className="grid gap-6" ref={listaRef}>
+          {ESTADOS_PEDIDO.map((estado) => (
+            <Lista
+              key={estado}
+              titulo={ETIQUETA_ESTADO_PEDIDO[estado]}
+              filas={porEstado(estado)}
+              puedeGestionar={puedeGestionarDatos}
+              onCambiar={(id, nuevoEstado) =>
+                cambiar.mutate({ id, estado: nuevoEstado, nota: "" })
+              }
+              productos={productos.data ?? []}
+              onFicha={setFicha}
+              onHistorial={setHistorial}
+            />
+          ))}
         </div>
       </div>
+
 
       {puedeGestionarDatos ? (
         <Catalogo productos={productos.data ?? []} onFicha={setFicha} />
