@@ -124,4 +124,11 @@ export const crearPedidoSchema = z.object({
   foto,
 });
 
-export const marcarPedidoSchema = z.object({ token, id: uuid, pedido: z.boolean() });
+export const estadoPedidoSchema = z.object({
+  token,
+  id: uuid,
+  estado: z.enum(["pendiente", "confirmado", "entregado", "cancelado"]),
+  nota: texto(300),
+});
+
+export const historialPedidoSchema = z.object({ token, pedido_id: uuid });
