@@ -210,9 +210,16 @@ export const fnCrearPedido = createServerFn({ method: "POST" })
     return crearPedido(token, input);
   });
 
-export const fnMarcarPedido = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => S.marcarPedidoSchema.parse(d))
+export const fnEstadoPedido = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.estadoPedidoSchema.parse(d))
   .handler(async ({ data }) => {
-    const { marcarPedido } = await import("@/lib/datos.server");
-    return marcarPedido(data.token, data.id, data.pedido);
+    const { cambiarEstadoPedido } = await import("@/lib/datos.server");
+    return cambiarEstadoPedido(data.token, data.id, data.estado, data.nota);
+  });
+
+export const fnHistorialPedido = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => S.historialPedidoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { listarHistorialPedido } = await import("@/lib/datos.server");
+    return listarHistorialPedido(data.token, data.pedido_id);
   });
