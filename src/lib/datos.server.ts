@@ -461,7 +461,7 @@ export async function listarPedidos(token: string | null) {
   let consulta = supabaseAdmin
     .from("pedidos")
     .select(
-      "id, producto_id, operario_id, cantidad, notas, foto_url, estado, estado_at, pedido_at, created_at, producto:productos(nombre, referencia, proveedor, unidad, ficha_completa), operario:operarios(nombre, area)",
+      "id, producto_id, operario_id, cantidad, notas, foto_url, estado, estado_at, pedido_at, created_at, producto:productos(nombre, referencia, proveedor, unidad, ficha_completa), operario:operarios!pedidos_operario_id_fkey(nombre, area)",
     )
     .order("created_at", { ascending: false })
     .limit(300);
