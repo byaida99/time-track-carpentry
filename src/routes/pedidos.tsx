@@ -568,12 +568,57 @@ function Historial({ pedido, onCerrar }: { pedido: Pedido; onCerrar: () => void 
   );
 }
 
+function descargarHistorial(pedidos: Pedido[]) {
+  if (pedidos.length === 0) {
+    toast.error("No hay pedidos que descargar");
+    return;
+  }
+  const cabecera = [
+    "Fecha creación",
+    "Producto",
+    "Referencia",
+    "Proveedor",
+    "Cantidad",
+    "Unidad",
+    "Estado",
+    "Último cambio",
+    "Solicitante",
+    "Notas",
+  ];
+  const celda = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const filas = pedidos.map((p) =>
+    [
+      new Date(p.created_at).toLocaleString("es-ES"),
+      p.producto?.nombre ?? "",
+      p.producto?.referencia ?? "",
+      p.producto?.proveedor ?? "",
+      p.cantidad,
+      p.producto?.unidad ?? "ud",
+      ETIQUETA_ESTADO_PEDIDO[p.estado as EstadoPedido] ?? p.estado,
+      p.estado_at ? new Date(p.estado_at).toLocaleString("es-ES") : "",
+      p.operario?.nombre ?? "",
+      p.notas,
+    ]
+      .map(celda)
+      .join(";"),
+  );
+  const csv = `\uFEFF${[cabecera.map(celda).join(";"), ...filas].join("\n")}`;
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `historial-pedidos-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function Catalogo({
   productos,
   onFicha,
+  onAmpliar,
 }: {
   productos: Producto[];
   onFicha: (p: Producto) => void;
+  onAmpliar: (foto: string, alt: string) => void;
 }) {
   return (
     <section className="mt-8">
@@ -590,8 +635,13 @@ function Catalogo({
               <img
                 src={p.foto}
                 alt={`Foto de ${p.nombre}`}
-                className="size-12 rounded-md border border-border object-cover"
+                title="Ampliar imagen"
+                className="size-12 cursor-zoom-in rounded-md border border-border object-cover"
                 loading="lazy"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAmpliar(p.foto!, `Foto de ${p.nombre}`);
+                }}
               />
             ) : (
               <span className="flex size-12 items-center justify-center rounded-md bg-secondary text-muted-foreground">
