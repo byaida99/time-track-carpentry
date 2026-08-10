@@ -267,6 +267,19 @@ function Pedidos() {
         </Card>
 
         <div className="grid gap-6" ref={listaRef}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {pedidos.isFetching ? "Actualizando…" : "Actualización automática activa"}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => descargarHistorial(pedidos.data ?? [])}
+            >
+              <Download className="mr-2 size-4" /> Descargar historial
+            </Button>
+          </div>
           {ESTADOS_PEDIDO.map((estado) => (
             <Lista
               key={estado}
@@ -279,6 +292,7 @@ function Pedidos() {
               productos={productos.data ?? []}
               onFicha={setFicha}
               onHistorial={setHistorial}
+              onAmpliar={(f, alt) => setLupa({ foto: f, alt })}
             />
           ))}
         </div>
@@ -286,7 +300,11 @@ function Pedidos() {
 
 
       {puedeGestionarDatos ? (
-        <Catalogo productos={productos.data ?? []} onFicha={setFicha} />
+        <Catalogo
+          productos={productos.data ?? []}
+          onFicha={setFicha}
+          onAmpliar={(f, alt) => setLupa({ foto: f, alt })}
+        />
       ) : null}
 
       {ficha ? (
@@ -303,6 +321,10 @@ function Pedidos() {
 
       {historial ? (
         <Historial pedido={historial} onCerrar={() => setHistorial(null)} />
+      ) : null}
+
+      {lupa ? (
+        <Lupa foto={lupa.foto} alt={lupa.alt} onCerrar={() => setLupa(null)} />
       ) : null}
     </AppShell>
   );
