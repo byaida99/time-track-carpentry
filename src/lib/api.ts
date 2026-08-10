@@ -93,7 +93,12 @@ function token() {
  * sesión. Así se evita el error «Sesión no válida» durante el SSR o antes de
  * introducir el PIN.
  */
-export function useDatos<T>(q: { queryKey: unknown[]; queryFn: () => Promise<T> }) {
+export function useDatos<T>(q: {
+  queryKey: unknown[];
+  queryFn: () => Promise<T>;
+  refetchInterval?: number;
+  refetchOnWindowFocus?: boolean;
+}) {
   const t = useToken();
   const res = useQuery({
     ...q,
@@ -393,6 +398,9 @@ export const productosQuery = {
 
 export const pedidosQuery = {
   queryKey: ["pedidos"],
+  // Recarga automática para que la lista refleje los cambios de estado de otros.
+  refetchInterval: 20_000,
+  refetchOnWindowFocus: true,
   queryFn: async () =>
     (await fnListarPedidos({ data: { token: token() } })) as unknown as Pedido[],
 };

@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Camera, Check, ClipboardList, History as Reloj, Package, X } from "lucide-react";
+import {
+  Camera,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Download,
+  History as Reloj,
+  Package,
+  X,
+} from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -88,6 +98,7 @@ function Pedidos() {
   const [foto, setFoto] = useState<string | null>(null);
   const [ficha, setFicha] = useState<Producto | null>(null);
   const [historial, setHistorial] = useState<Pedido | null>(null);
+  const [lupa, setLupa] = useState<{ foto: string; alt: string } | null>(null);
   const listaRef = useRef<HTMLDivElement>(null);
 
   const disponibles = useMemo(
@@ -257,6 +268,19 @@ function Pedidos() {
         </Card>
 
         <div className="grid gap-6" ref={listaRef}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {pedidos.isFetching ? "Actualizando…" : "Actualización automática activa"}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => descargarHistorial(pedidos.data ?? [])}
+            >
+              <Download className="mr-2 size-4" /> Descargar historial
+            </Button>
+          </div>
           {ESTADOS_PEDIDO.map((estado) => (
             <Lista
               key={estado}
@@ -269,6 +293,7 @@ function Pedidos() {
               productos={productos.data ?? []}
               onFicha={setFicha}
               onHistorial={setHistorial}
+              onAmpliar={(f, alt) => setLupa({ foto: f, alt })}
             />
           ))}
         </div>
@@ -276,7 +301,11 @@ function Pedidos() {
 
 
       {puedeGestionarDatos ? (
-        <Catalogo productos={productos.data ?? []} onFicha={setFicha} />
+        <Catalogo
+          productos={productos.data ?? []}
+          onFicha={setFicha}
+          onAmpliar={(f, alt) => setLupa({ foto: f, alt })}
+        />
       ) : null}
 
       {ficha ? (
@@ -294,6 +323,10 @@ function Pedidos() {
       {historial ? (
         <Historial pedido={historial} onCerrar={() => setHistorial(null)} />
       ) : null}
+
+      {lupa ? (
+        <Lupa foto={lupa.foto} alt={lupa.alt} onCerrar={() => setLupa(null)} />
+      ) : null}
     </AppShell>
   );
 }
@@ -305,6 +338,8 @@ const COLOR_ESTADO: Record<EstadoPedido, string> = {
   cancelado: "bg-destructive/15 text-destructive",
 };
 
+const POR_PAGINA = 10;
+
 function Lista({
   titulo,
   filas,
@@ -313,6 +348,7 @@ function Lista({
   productos,
   onFicha,
   onHistorial,
+  onAmpliar,
 }: {
   titulo: string;
   filas: Pedido[];
@@ -321,7 +357,13 @@ function Lista({
   productos: Producto[];
   onFicha: (p: Producto) => void;
   onHistorial: (p: Pedido) => void;
+  onAmpliar: (foto: string, alt: string) => void;
 }) {
+  const [pagina, setPagina] = useState(0);
+  const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
+  const actual = Math.min(pagina, paginas - 1);
+  const visibles = filas.slice(actual * POR_PAGINA, actual * POR_PAGINA + POR_PAGINA);
+
   return (
     <section>
       <h2 className="label-caps mb-2 text-muted-foreground">
@@ -333,20 +375,28 @@ function Lista({
             Nada por aquí.
           </p>
         ) : null}
-        {filas.map((p) => {
+        {visibles.map((p) => {
           const producto = productos.find((x) => x.id === p.producto_id);
+          const alt = `Foto de ${p.producto?.nombre ?? "producto"}`;
           return (
             <div
               key={p.id}
               className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
             >
               {p.foto ? (
-                <img
-                  src={p.foto}
-                  alt={`Foto de ${p.producto?.nombre ?? "producto"}`}
-                  className="size-12 rounded-md border border-border object-cover"
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  onClick={() => onAmpliar(p.foto!, alt)}
+                  title="Ampliar imagen"
+                  className="shrink-0"
+                >
+                  <img
+                    src={p.foto}
+                    alt={alt}
+                    className="size-12 cursor-zoom-in rounded-md border border-border object-cover transition-transform hover:scale-105"
+                    loading="lazy"
+                  />
+                </button>
               ) : (
                 <span className="flex size-12 items-center justify-center rounded-md bg-secondary text-muted-foreground">
                   <Package className="size-5" />
@@ -407,8 +457,65 @@ function Lista({
             </div>
           );
         })}
+        {paginas > 1 ? (
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={actual === 0}
+              onClick={() => setPagina(actual - 1)}
+            >
+              <ChevronLeft className="size-4" /> Anterior
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Página {actual + 1} de {paginas}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={actual >= paginas - 1}
+              onClick={() => setPagina(actual + 1)}
+            >
+              Siguiente <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function Lupa({
+  foto,
+  alt,
+  onCerrar,
+}: {
+  foto: string;
+  alt: string;
+  onCerrar: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/90 p-4 backdrop-blur"
+      onClick={onCerrar}
+    >
+      <img
+        src={foto}
+        alt={alt}
+        className="max-h-[85vh] max-w-full rounded-lg border border-border object-contain shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+      <Button
+        variant="secondary"
+        size="sm"
+        className="absolute right-4 top-4"
+        onClick={onCerrar}
+      >
+        <X className="size-4" />
+      </Button>
+    </div>
   );
 }
 
@@ -461,12 +568,57 @@ function Historial({ pedido, onCerrar }: { pedido: Pedido; onCerrar: () => void 
   );
 }
 
+function descargarHistorial(pedidos: Pedido[]) {
+  if (pedidos.length === 0) {
+    toast.error("No hay pedidos que descargar");
+    return;
+  }
+  const cabecera = [
+    "Fecha creación",
+    "Producto",
+    "Referencia",
+    "Proveedor",
+    "Cantidad",
+    "Unidad",
+    "Estado",
+    "Último cambio",
+    "Solicitante",
+    "Notas",
+  ];
+  const celda = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const filas = pedidos.map((p) =>
+    [
+      new Date(p.created_at).toLocaleString("es-ES"),
+      p.producto?.nombre ?? "",
+      p.producto?.referencia ?? "",
+      p.producto?.proveedor ?? "",
+      p.cantidad,
+      p.producto?.unidad ?? "ud",
+      ETIQUETA_ESTADO_PEDIDO[p.estado as EstadoPedido] ?? p.estado,
+      p.estado_at ? new Date(p.estado_at).toLocaleString("es-ES") : "",
+      p.operario?.nombre ?? "",
+      p.notas,
+    ]
+      .map(celda)
+      .join(";"),
+  );
+  const csv = `\uFEFF${[cabecera.map(celda).join(";"), ...filas].join("\n")}`;
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `historial-pedidos-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function Catalogo({
   productos,
   onFicha,
+  onAmpliar,
 }: {
   productos: Producto[];
   onFicha: (p: Producto) => void;
+  onAmpliar: (foto: string, alt: string) => void;
 }) {
   return (
     <section className="mt-8">
@@ -483,8 +635,13 @@ function Catalogo({
               <img
                 src={p.foto}
                 alt={`Foto de ${p.nombre}`}
-                className="size-12 rounded-md border border-border object-cover"
+                title="Ampliar imagen"
+                className="size-12 cursor-zoom-in rounded-md border border-border object-cover"
                 loading="lazy"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAmpliar(p.foto!, `Foto de ${p.nombre}`);
+                }}
               />
             ) : (
               <span className="flex size-12 items-center justify-center rounded-md bg-secondary text-muted-foreground">
