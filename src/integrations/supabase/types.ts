@@ -430,6 +430,7 @@ export type Database = {
         Args: { _operario_id: string; _pin: string }
         Returns: undefined
       }
+      limpiar_pedidos_antiguos: { Args: never; Returns: undefined }
       operario_tiene_pin: { Args: { _operario_id: string }; Returns: boolean }
       verificar_pin: {
         Args: { _operario_id: string; _pin: string }
