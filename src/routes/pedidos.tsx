@@ -305,6 +305,8 @@ const COLOR_ESTADO: Record<EstadoPedido, string> = {
   cancelado: "bg-destructive/15 text-destructive",
 };
 
+const POR_PAGINA = 10;
+
 function Lista({
   titulo,
   filas,
@@ -313,6 +315,7 @@ function Lista({
   productos,
   onFicha,
   onHistorial,
+  onAmpliar,
 }: {
   titulo: string;
   filas: Pedido[];
@@ -321,7 +324,13 @@ function Lista({
   productos: Producto[];
   onFicha: (p: Producto) => void;
   onHistorial: (p: Pedido) => void;
+  onAmpliar: (foto: string, alt: string) => void;
 }) {
+  const [pagina, setPagina] = useState(0);
+  const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
+  const actual = Math.min(pagina, paginas - 1);
+  const visibles = filas.slice(actual * POR_PAGINA, actual * POR_PAGINA + POR_PAGINA);
+
   return (
     <section>
       <h2 className="label-caps mb-2 text-muted-foreground">
@@ -333,20 +342,28 @@ function Lista({
             Nada por aquí.
           </p>
         ) : null}
-        {filas.map((p) => {
+        {visibles.map((p) => {
           const producto = productos.find((x) => x.id === p.producto_id);
+          const alt = `Foto de ${p.producto?.nombre ?? "producto"}`;
           return (
             <div
               key={p.id}
               className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
             >
               {p.foto ? (
-                <img
-                  src={p.foto}
-                  alt={`Foto de ${p.producto?.nombre ?? "producto"}`}
-                  className="size-12 rounded-md border border-border object-cover"
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  onClick={() => onAmpliar(p.foto!, alt)}
+                  title="Ampliar imagen"
+                  className="shrink-0"
+                >
+                  <img
+                    src={p.foto}
+                    alt={alt}
+                    className="size-12 cursor-zoom-in rounded-md border border-border object-cover transition-transform hover:scale-105"
+                    loading="lazy"
+                  />
+                </button>
               ) : (
                 <span className="flex size-12 items-center justify-center rounded-md bg-secondary text-muted-foreground">
                   <Package className="size-5" />
@@ -407,8 +424,65 @@ function Lista({
             </div>
           );
         })}
+        {paginas > 1 ? (
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={actual === 0}
+              onClick={() => setPagina(actual - 1)}
+            >
+              <ChevronLeft className="size-4" /> Anterior
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Página {actual + 1} de {paginas}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={actual >= paginas - 1}
+              onClick={() => setPagina(actual + 1)}
+            >
+              Siguiente <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function Lupa({
+  foto,
+  alt,
+  onCerrar,
+}: {
+  foto: string;
+  alt: string;
+  onCerrar: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/90 p-4 backdrop-blur"
+      onClick={onCerrar}
+    >
+      <img
+        src={foto}
+        alt={alt}
+        className="max-h-[85vh] max-w-full rounded-lg border border-border object-contain shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+      <Button
+        variant="secondary"
+        size="sm"
+        className="absolute right-4 top-4"
+        onClick={onCerrar}
+      >
+        <X className="size-4" />
+      </Button>
+    </div>
   );
 }
 
