@@ -98,6 +98,7 @@ function Pedidos() {
   const [foto, setFoto] = useState<string | null>(null);
   const [ficha, setFicha] = useState<Producto | null>(null);
   const [historial, setHistorial] = useState<Pedido | null>(null);
+  const [lupa, setLupa] = useState<{ foto: string; alt: string } | null>(null);
   const listaRef = useRef<HTMLDivElement>(null);
 
   const disponibles = useMemo(
