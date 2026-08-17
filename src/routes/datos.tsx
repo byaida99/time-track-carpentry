@@ -591,13 +591,19 @@ function Operarios() {
 
 
 
+type ItemLista = { id: string; titulo: string; detalle?: string; activo: boolean };
+
 function Lista({
   items,
   onCambiarEstado,
 }: {
-  items: { id: string; titulo: string; detalle?: string; activo: boolean }[];
+  items: ItemLista[];
   onCambiarEstado: (id: string, activo: boolean) => void;
 }) {
+  const [verArchivados, setVerArchivados] = useState(false);
+  const activos = items.filter((i) => i.activo);
+  const archivados = items.filter((i) => !i.activo);
+
   if (items.length === 0) {
     return (
       <p className="mt-6 rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -605,33 +611,53 @@ function Lista({
       </p>
     );
   }
+
+  const fila = (i: ItemLista) => (
+    <li
+      key={i.id}
+      className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2"
+    >
+      <div>
+        <p className="text-sm font-medium">
+          {i.titulo}
+          {i.activo ? null : (
+            <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+              Archivado
+            </span>
+          )}
+        </p>
+        {i.detalle ? <p className="text-xs text-muted-foreground">{i.detalle}</p> : null}
+      </div>
+      <Button
+        variant={i.activo ? "outline" : "default"}
+        size="sm"
+        onClick={() => onCambiarEstado(i.id, !i.activo)}
+      >
+        {i.activo ? "Archivar" : "Reactivar"}
+      </Button>
+    </li>
+  );
+
   return (
-    <ul className="mt-6 grid gap-2">
-      {items.map((i) => (
-        <li
-          key={i.id}
-          className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2"
-        >
-          <div>
-            <p className="text-sm font-medium">
-              {i.titulo}
-              {i.activo ? null : (
-                <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                  Deshabilitado
-                </span>
-              )}
-            </p>
-            {i.detalle ? <p className="text-xs text-muted-foreground">{i.detalle}</p> : null}
-          </div>
+    <div className="mt-6 grid gap-3">
+      <ul className="grid gap-2">{activos.map(fila)}</ul>
+      {activos.length === 0 ? (
+        <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No hay registros activos.
+        </p>
+      ) : null}
+      {archivados.length > 0 ? (
+        <div className="rounded-md border border-dashed border-border p-3">
           <Button
-            variant={i.activo ? "outline" : "default"}
+            variant="ghost"
             size="sm"
-            onClick={() => onCambiarEstado(i.id, !i.activo)}
+            onClick={() => setVerArchivados((v) => !v)}
           >
-            {i.activo ? "Deshabilitar" : "Reactivar"}
+            {verArchivados ? "Ocultar" : "Ver"} archivados ({archivados.length})
           </Button>
-        </li>
-      ))}
-    </ul>
+          {verArchivados ? <ul className="mt-2 grid gap-2">{archivados.map(fila)}</ul> : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
