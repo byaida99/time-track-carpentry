@@ -582,17 +582,10 @@ function Operarios() {
                 </div>
               ) : null}
             </li>
-          ))}
-          {(operarios.data ?? []).length === 0 ? (
-            <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              Todavía no hay operarios.
-            </p>
-          ) : null}
-        </ul>
-      </CardContent>
-    </Card>
-  );
+    );
+  }
 }
+
 
 
 
