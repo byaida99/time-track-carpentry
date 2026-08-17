@@ -289,7 +289,9 @@ function Operarios() {
   const [nombre, setNombre] = useState("");
   const [area, setArea] = useState("taller");
   const [pin, setPin] = useState("");
+  const [verArchivados, setVerArchivados] = useState(false);
   const [cambiando, setCambiando] = useState<string | null>(null);
+
   const [nuevoPin, setNuevoPin] = useState("");
   const [jornadaDe, setJornadaDe] = useState<string | null>(null);
   const [form, setForm] = useState({
