@@ -417,8 +417,52 @@ function Operarios() {
           </div>
         </form>
 
-        <ul className="mt-6 grid gap-2">
-          {(operarios.data ?? []).map((o) => (
+        {(() => {
+          const todos = operarios.data ?? [];
+          const activos = todos.filter((o) => o.activo);
+          const archivados = todos.filter((o) => !o.activo);
+          return (
+            <>
+              <ul className="mt-6 grid gap-2">
+                {activos.map(renderOperario)}
+                {todos.length === 0 ? (
+                  <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                    Todavía no hay operarios.
+                  </p>
+                ) : null}
+                {todos.length > 0 && activos.length === 0 ? (
+                  <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                    No hay operarios en activo.
+                  </p>
+                ) : null}
+              </ul>
+
+              {archivados.length > 0 ? (
+                <div className="mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setVerArchivados(!verArchivados)}
+                  >
+                    {verArchivados ? "Ocultar" : "Ver"} archivados ({archivados.length})
+                  </Button>
+                  {verArchivados ? (
+                    <ul className="mt-3 grid gap-2 opacity-80">
+                      {archivados.map(renderOperario)}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+            </>
+          );
+        })()}
+      </CardContent>
+    </Card>
+  );
+
+  function renderOperario(o: (typeof operarios.data extends undefined ? never : NonNullable<typeof operarios.data>)[number]) {
+    return (
+
             <li key={o.id} className="rounded-md border border-border bg-background px-3 py-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
