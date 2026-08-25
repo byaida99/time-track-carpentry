@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useMemo, useState } from "react";
-import { Download } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Download } from "lucide-react";
+
 
 import { usePermisos } from "@/lib/permisos";
 import { AppShell } from "@/components/AppShell";
