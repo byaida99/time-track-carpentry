@@ -517,13 +517,14 @@ function Operarios() {
                 <span className="label-caps text-muted-foreground">Permisos</span>
                 {TODOS_ROLES.map((rol) => {
                   const activo = tieneRol(o.id, rol);
+                  const bloqueado = (o as { protegido?: boolean }).protegido === true;
                   return (
                     <Button
                       key={rol}
                       type="button"
                       size="sm"
                       variant={activo ? "default" : "outline"}
-                      disabled={dar.isPending || quitar.isPending}
+                      disabled={dar.isPending || quitar.isPending || (bloqueado && activo)}
                       onClick={() =>
                         activo
                           ? quitar.mutate({ operario_id: o.id, role: rol } as never)
