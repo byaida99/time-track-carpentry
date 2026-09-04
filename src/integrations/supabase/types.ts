@@ -117,6 +117,7 @@ export type Database = {
           jornada_minutos: number
           nombre: string
           pin_hash: string | null
+          protegido: boolean
         }
         Insert: {
           activo?: boolean
@@ -129,6 +130,7 @@ export type Database = {
           jornada_minutos?: number
           nombre: string
           pin_hash?: string | null
+          protegido?: boolean
         }
         Update: {
           activo?: boolean
@@ -141,6 +143,7 @@ export type Database = {
           jornada_minutos?: number
           nombre?: string
           pin_hash?: string | null
+          protegido?: boolean
         }
         Relationships: []
       }
