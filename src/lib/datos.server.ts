@@ -333,6 +333,9 @@ export async function quitarRol(
   input: { operario_id: string; role: Rol },
 ) {
   requiereAdmin(await requiereActor(token));
+  if (await esProtegido(input.operario_id)) {
+    throw new Error("El perfil de administrador protegido conserva todos los permisos");
+  }
   const { error } = await supabaseAdmin
     .from("operario_roles")
     .delete()
