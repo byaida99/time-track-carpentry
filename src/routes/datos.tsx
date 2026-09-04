@@ -475,6 +475,11 @@ function Operarios() {
                         De baja
                       </span>
                     )}
+                    {(o as { protegido?: boolean }).protegido ? (
+                      <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-xs text-primary">
+                        Administrador protegido
+                      </span>
+                    ) : null}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {o.area} · entrada {(o.hora_entrada ?? "07:00").slice(0, 5)} ·{" "}
