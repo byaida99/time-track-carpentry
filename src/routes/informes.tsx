@@ -394,21 +394,68 @@ function Informes() {
       </div>
 
       <section className="mt-10">
-        <h2 className="mb-3 text-xl font-bold">Detalle</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-bold">Detalle</h2>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{detalle.length} filas</span>
+            {orden || Object.values(filtrosCol).some((v) => v?.trim()) ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setOrden(null);
+                  setFiltrosCol({});
+                }}
+              >
+                Limpiar orden y filtros
+              </Button>
+            ) : null}
+          </div>
+        </div>
         <div className="overflow-x-auto rounded-md border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left">
-                <th className="label-caps px-3 py-2">Fecha</th>
-                <th className="label-caps px-3 py-2">Operario</th>
-                <th className="label-caps px-3 py-2">Cliente / Proyecto</th>
-                <th className="label-caps px-3 py-2">Tramo</th>
-                <th className="label-caps px-3 py-2">Horas</th>
-                <th className="label-caps px-3 py-2">Descripción</th>
+                {COLUMNAS.map((c) => (
+                  <th key={c.id} className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrden(c.id)}
+                      className="label-caps flex items-center gap-1 hover:text-primary"
+                      aria-label={`Ordenar por ${c.etiqueta}`}
+                    >
+                      {c.etiqueta}
+                      {orden?.col === c.id ? (
+                        orden.dir === "asc" ? (
+                          <ArrowUp className="size-3" />
+                        ) : (
+                          <ArrowDown className="size-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-40" />
+                      )}
+                    </button>
+                  </th>
+                ))}
+              </tr>
+              <tr className="border-b border-border bg-muted/40">
+                {COLUMNAS.map((c) => (
+                  <th key={c.id} className="px-2 py-2">
+                    <Input
+                      className="h-8 text-xs"
+                      placeholder="Filtrar…"
+                      aria-label={`Filtrar ${c.etiqueta}`}
+                      value={filtrosCol[c.id] ?? ""}
+                      onChange={(e) =>
+                        setFiltrosCol((prev) => ({ ...prev, [c.id]: e.target.value }))
+                      }
+                    />
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {filtrados.map((p) => (
+              {detalle.map((p) => (
                 <tr key={p.id} className="border-b border-border/60 last:border-0">
                   <td className="whitespace-nowrap px-3 py-2">{p.fecha}</td>
                   <td className="whitespace-nowrap px-3 py-2">{p.operario?.nombre}</td>
@@ -422,13 +469,14 @@ function Informes() {
                   <td className="px-3 py-2 text-muted-foreground">{p.descripcion}</td>
                 </tr>
               ))}
-              {filtrados.length === 0 ? (
+              {detalle.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
                     No hay partes con estos filtros.
                   </td>
                 </tr>
               ) : null}
+
             </tbody>
           </table>
         </div>
