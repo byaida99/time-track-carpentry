@@ -62,6 +62,7 @@ export async function listarOperarios(token: string | null) {
     );
     return filas.map((o) => ({
       ...o,
+      protegido: false,
       jornada_minutos: 0,
       hora_entrada: "07:00:00",
       desayuno_minutos: 0,
