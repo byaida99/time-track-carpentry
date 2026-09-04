@@ -11,7 +11,17 @@ import {
 } from "@/lib/auth.server";
 
 const CAMPOS_OPERARIO =
-  "id, nombre, area, activo, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos";
+  "id, nombre, area, activo, protegido, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos";
+
+// El perfil de administración protegido no se puede desactivar ni perder permisos.
+async function esProtegido(operarioId: string) {
+  const { data } = await supabaseAdmin
+    .from("operarios")
+    .select("protegido")
+    .eq("id", operarioId)
+    .single();
+  return data?.protegido === true;
+}
 
 function comprobar<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
