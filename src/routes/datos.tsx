@@ -501,14 +501,16 @@ function Operarios() {
                   >
                     Cambiar PIN
                   </Button>
-                  <Button
-                    variant={o.activo ? "outline" : "default"}
-                    size="sm"
-                    disabled={estado.isPending}
-                    onClick={() => estado.mutate({ id: o.id, activo: !o.activo } as never)}
-                  >
-                    {o.activo ? "Dar de baja" : "Reactivar"}
-                  </Button>
+                  {(o as { protegido?: boolean }).protegido ? null : (
+                    <Button
+                      variant={o.activo ? "outline" : "default"}
+                      size="sm"
+                      disabled={estado.isPending}
+                      onClick={() => estado.mutate({ id: o.id, activo: !o.activo } as never)}
+                    >
+                      {o.activo ? "Dar de baja" : "Reactivar"}
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
