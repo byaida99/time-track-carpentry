@@ -11,7 +11,17 @@ import {
 } from "@/lib/auth.server";
 
 const CAMPOS_OPERARIO =
-  "id, nombre, area, activo, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos";
+  "id, nombre, area, activo, protegido, jornada_minutos, hora_entrada, desayuno_minutos, comida_minutos";
+
+// El perfil de administración protegido no se puede desactivar ni perder permisos.
+async function esProtegido(operarioId: string) {
+  const { data } = await supabaseAdmin
+    .from("operarios")
+    .select("protegido")
+    .eq("id", operarioId)
+    .single();
+  return data?.protegido === true;
+}
 
 function comprobar<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -52,6 +62,7 @@ export async function listarOperarios(token: string | null) {
     );
     return filas.map((o) => ({
       ...o,
+      protegido: false,
       jornada_minutos: 0,
       hora_entrada: "07:00:00",
       desayuno_minutos: 0,
@@ -147,6 +158,9 @@ export async function cambiarEstadoOperario(
   activo: boolean,
 ) {
   requiereAdmin(await requiereActor(token));
+  if (!activo && (await esProtegido(id))) {
+    throw new Error("El perfil de administrador protegido no se puede dar de baja");
+  }
   const { error } = await supabaseAdmin.from("operarios").update({ activo }).eq("id", id);
   if (error) throw new Error(error.message);
 }
@@ -319,6 +333,9 @@ export async function quitarRol(
   input: { operario_id: string; role: Rol },
 ) {
   requiereAdmin(await requiereActor(token));
+  if (await esProtegido(input.operario_id)) {
+    throw new Error("El perfil de administrador protegido conserva todos los permisos");
+  }
   const { error } = await supabaseAdmin
     .from("operario_roles")
     .delete()

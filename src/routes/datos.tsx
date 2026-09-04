@@ -475,6 +475,11 @@ function Operarios() {
                         De baja
                       </span>
                     )}
+                    {(o as { protegido?: boolean }).protegido ? (
+                      <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-xs text-primary">
+                        Administrador protegido
+                      </span>
+                    ) : null}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {o.area} · entrada {(o.hora_entrada ?? "07:00").slice(0, 5)} ·{" "}
@@ -496,27 +501,30 @@ function Operarios() {
                   >
                     Cambiar PIN
                   </Button>
-                  <Button
-                    variant={o.activo ? "outline" : "default"}
-                    size="sm"
-                    disabled={estado.isPending}
-                    onClick={() => estado.mutate({ id: o.id, activo: !o.activo } as never)}
-                  >
-                    {o.activo ? "Dar de baja" : "Reactivar"}
-                  </Button>
+                  {(o as { protegido?: boolean }).protegido ? null : (
+                    <Button
+                      variant={o.activo ? "outline" : "default"}
+                      size="sm"
+                      disabled={estado.isPending}
+                      onClick={() => estado.mutate({ id: o.id, activo: !o.activo } as never)}
+                    >
+                      {o.activo ? "Dar de baja" : "Reactivar"}
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="label-caps text-muted-foreground">Permisos</span>
                 {TODOS_ROLES.map((rol) => {
                   const activo = tieneRol(o.id, rol);
+                  const bloqueado = (o as { protegido?: boolean }).protegido === true;
                   return (
                     <Button
                       key={rol}
                       type="button"
                       size="sm"
                       variant={activo ? "default" : "outline"}
-                      disabled={dar.isPending || quitar.isPending}
+                      disabled={dar.isPending || quitar.isPending || (bloqueado && activo)}
                       onClick={() =>
                         activo
                           ? quitar.mutate({ operario_id: o.id, role: rol } as never)

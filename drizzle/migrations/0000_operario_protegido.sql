@@ -1,0 +1,1 @@
+ALTER TABLE public.operarios ADD COLUMN IF NOT EXISTS protegido boolean NOT NULL DEFAULT false;
