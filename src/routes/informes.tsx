@@ -49,6 +49,17 @@ export const Route = createFileRoute("/informes")({
 
 const TODOS = "todos";
 
+const COLUMNAS = [
+  { id: "fecha", etiqueta: "Fecha" },
+  { id: "operario", etiqueta: "Operario" },
+  { id: "proyecto", etiqueta: "Cliente / Proyecto" },
+  { id: "tramo", etiqueta: "Tramo" },
+  { id: "horas", etiqueta: "Horas" },
+  { id: "descripcion", etiqueta: "Descripción" },
+] as const;
+
+type ColId = (typeof COLUMNAS)[number]["id"];
+
 function Informes() {
   const permisos = usePermisos();
   const partes = useDatos(partesQuery);
@@ -62,6 +73,9 @@ function Informes() {
   const [operarioId, setOperarioId] = useState(TODOS);
   const [clienteId, setClienteId] = useState(TODOS);
   const [proyectoId, setProyectoId] = useState(TODOS);
+  const [orden, setOrden] = useState<{ col: ColId; dir: "asc" | "desc" } | null>(null);
+  const [filtrosCol, setFiltrosCol] = useState<Partial<Record<ColId, string>>>({});
+
 
   const filtrados = useMemo(() => {
     return (partes.data ?? []).filter((p) => {
