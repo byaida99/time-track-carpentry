@@ -158,6 +158,9 @@ export async function cambiarEstadoOperario(
   activo: boolean,
 ) {
   requiereAdmin(await requiereActor(token));
+  if (!activo && (await esProtegido(id))) {
+    throw new Error("El perfil de administrador protegido no se puede dar de baja");
+  }
   const { error } = await supabaseAdmin.from("operarios").update({ activo }).eq("id", id);
   if (error) throw new Error(error.message);
 }
