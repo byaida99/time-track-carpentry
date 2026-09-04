@@ -78,11 +78,55 @@ function Informes() {
 
   const total = filtrados.reduce((acc, p) => acc + p.minutos, 0);
 
+  type Parte = (typeof filtrados)[number];
+  const valores: Record<ColId, (p: Parte) => string | number> = {
+    fecha: (p) => p.fecha,
+    operario: (p) => p.operario?.nombre ?? "",
+    proyecto: (p) =>
+      `${p.cliente?.codigo ?? ""} / ${p.proyecto?.codigo ?? ""} ${p.proyecto?.nombre ?? ""}`.trim(),
+    tramo: (p) => `${hhmm(p.hora_inicio)}–${hhmm(p.hora_fin)}`,
+    horas: (p) => p.minutos,
+    descripcion: (p) => p.descripcion,
+  };
+
+  const detalle = useMemo(() => {
+    const filtrada = filtrados.filter((p) =>
+      COLUMNAS.every((c) => {
+        const texto = (filtrosCol[c.id] ?? "").trim().toLowerCase();
+        if (!texto) return true;
+        return String(valores[c.id](p)).toLowerCase().includes(texto);
+      }),
+    );
+    if (!orden) return filtrada;
+    const acceso = valores[orden.col];
+    return [...filtrada].sort((a, b) => {
+      const va = acceso(a);
+      const vb = acceso(b);
+      const cmp =
+        typeof va === "number" && typeof vb === "number"
+          ? va - vb
+          : String(va).localeCompare(String(vb), "es", { numeric: true });
+      return orden.dir === "asc" ? cmp : -cmp;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtrados, filtrosCol, orden]);
+
+  function alternarOrden(col: ColId) {
+    setOrden((prev) =>
+      !prev || prev.col !== col
+        ? { col, dir: "asc" }
+        : prev.dir === "asc"
+          ? { col, dir: "desc" }
+          : null,
+    );
+  }
+
   const porOperario = agrupar(filtrados, (p) => p.operario?.nombre ?? "—");
   const porProyecto = agrupar(
     filtrados,
     (p) => `${p.cliente?.codigo ?? "—"} / ${p.proyecto?.codigo ?? "—"} ${p.proyecto?.nombre ?? ""}`,
   );
+
 
   function exportar() {
     const cabecera = [
